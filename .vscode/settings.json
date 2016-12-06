@@ -1,6 +1,6 @@
 {
-    "files.exclude": {
-        "**/*.js": true,
-        "**/built": true
-    }
+	"files.exclude": {
+		"src/**/*.js": true
+		// "**/built": true
+	}
 }

@@ -2,6 +2,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vm from 'vm';
+import * as crypto from 'crypto';
 import * as typescript from 'typescript';
 
 let typescriptPath: string = require.resolve('typescript');
@@ -52,11 +53,28 @@ ts.createProgram = function(fileNames, compilerOptions, compilerHost): typescrip
 		if (fileName.match(/\.ts$/) && !fileName.match(/\.d\.ts$/) && source) {
 
 console.log(fileName + ' -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= ');
-			// let t = new TreeVisitor(source, fileName);
-			// let instrumentedSource = t.visit();
-			// instrumentedSource = 'let __coverage__ : any={};\n\n' + instrumentedSource;
 
-			let instrumentedSource = 'let cc = 0;\n\n' + vc3(source, [], 0, false);
+			let md5 = crypto.createHash('md5').update(source.getFullText()).digest("hex");
+
+			let statementNum = 0;
+			let instrumentedSource = vc3(source, [], 0, false, (type: string, node: typescript.Node) => {
+				let fullStart = node.getFullStart() + node.getLeadingTriviaWidth();
+				let length = node.getWidth() - node.getLeadingTriviaWidth();
+
+				let r = `__cov__['${md5}'][${statementNum}]++`;
+				statementNum++;
+
+				return r;
+			});
+
+			let header = [];
+			header.push('let __cov__: any = (Function("return this"))().__cov__ ? (Function("return this"))().__cov__ : {};');
+			header.push(`if (!__cov__['${md5}']) __cov__['${md5}'] = {`);
+			header.push(`	s: ${JSON.stringify({})}`);
+			header.push(`};`);
+
+			instrumentedSource = header.join('\n') + instrumentedSource;
+
 console.log(instrumentedSource);
 
 			return ts.createSourceFile(fileName, instrumentedSource, languageVersion);
@@ -71,20 +89,26 @@ console.log(instrumentedSource);
 	return program;
 };
 
-function vc3(node: typescript.Node, parents: typescript.Node[], depth: number, prefixed: boolean) {
+function vc3(node: typescript.Node,
+	parents: typescript.Node[],
+	depth: number,
+	prefixed: boolean,
+	report: (type: string, node: typescript.Node) => string)
+{
 	if (!node) return '';
 
-	// console.log(whitespace(depth * 2, ' ') + sk[node.kind]);
 	let parent = parents.length >= 1 ? parents[parents.length - 1] : { kind: null };
 	let grandParent = parents.length >= 2 ? parents[parents.length - 2] : { kind: null };
 	let grandGrandParent = parents.length >= 3 ? parents[parents.length - 3] : { kind: null };
 
-	parents.push(node);
+// console.log(whitespace(depth * 2, ' ') + sk[node.kind] + ' ' + sk[parent.kind] + ' ' + sk[grandParent.kind]);
 
 	let children = node.getChildren();
 	let nodeText = node.getFullText();
 
 	if (children.length === 0) return nodeText;
+
+	parents.push(node);
 
 	let p = [];
 
@@ -109,36 +133,35 @@ function vc3(node: typescript.Node, parents: typescript.Node[], depth: number, p
 			if (child.kind == sk.IfStatement) {
 
 				let ifStatement = child as typescript.IfStatement;
-				let expVisit = vc3(ifStatement.expression, parents, depth + 1, false);
-				let thenVisit = vc3(ifStatement.thenStatement, parents, depth + 1, false);
-				let elseVisit = vc3(ifStatement.elseStatement, parents, depth + 1, false);
+				let expVisit = vc3(ifStatement.expression, parents, depth + 1, false, report);
+				let thenVisit = vc3(ifStatement.thenStatement, parents, depth + 1, false, report);
+				let elseVisit = vc3(ifStatement.elseStatement, parents, depth + 1, false, report);
 
-				r = `if (${expVisit}) { cc++; ${thenVisit} } else { cc++; ${elseVisit} }`;
+				r = `if (${expVisit}) { ${report('statement', child)}; ${thenVisit} } else { ${report('statement', child)}; ${elseVisit} }`;
 
 			} else if (node.kind == sk.ArrowFunction && child.kind == sk.CallExpression) {
 
-				let childVisit = vc3(child, parents, depth + 1, true);
+				let childVisit = vc3(child, parents, depth + 1, true, report);
 				r = childVisit.substring(0, tw) +
-					'{ return ' +
-					childPrefix +
+					`{ return ${report('statement', child)}, ` +
 					childVisit.substring(tw).replace(/^\s/, '') +
 					'}';
 
 			} else {
 
-				let childVisit = vc3(child, parents, depth + 1, true);
+				let childVisit = vc3(child, parents, depth + 1, true, report);
 
-				if (child.kind == sk.ExpressionStatement) childPrefix = 'cc++, ';
-				else childPrefix = 'cc++; ';
+				if (child.kind == sk.ExpressionStatement) childPrefix = `${report('statement', child)}; `;
+				else childPrefix = `${report('statement', child)}; `;
 
 				r = childVisit.substring(0, tw) +
 					childPrefix +
 					childVisit.substring(tw);
+
 			}
 
 		} else {
-			let childVisit = vc3(child, parents, depth + 1, prefixChild || (prefixed && i == 0));
-			r = childVisit;
+			r = vc3(child, parents, depth + 1, prefixChild || (prefixed && i == 0), report);
 		}
 
 		p.push(r);

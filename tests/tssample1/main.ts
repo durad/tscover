@@ -27,9 +27,22 @@ b(() => {
     q += 2;
 });
 
-let x = 123;
+b(() => { console.log(222); });
+
+b(() => console.log(222));
+
+b(() =>
+    console.log(333)
+);
+
+let x = 123; let k = 323; let h = 535;
 
 if (x % 3 == 0) {
     console.log('Fizz');
+    console.log('Fizz again...');
 } else console.log('Buzz');
 
+let obj = {
+    a: 'asd',
+    x: 123
+};

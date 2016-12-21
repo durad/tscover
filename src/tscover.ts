@@ -17,16 +17,6 @@ let sk = vm.runInThisContext('(function(typescript) { return typescript.SyntaxKi
 let ts = vm.runInThisContext(tscCode, { displayErrors: true })(require, tscPath);
 let createProgramOriginal = ts.createProgram;
 
-
-
-
-class SourceVisitor {
-	constructor(sourceFile: typescript.SourceFile) {
-
-	}
-}
-
-
 function whitespace(length: number, ch: string = ' ') {
 	let s = [];
 	for (let i = 0; i < length; i++) s.push(ch);
@@ -34,6 +24,15 @@ function whitespace(length: number, ch: string = ' ') {
 	return s.join('');
 }
 
+function calculateHash(sources: typescript.SourceFile[]): string {
+	let hash = crypto.createHash('md5');
+
+	for (let source of sources) {
+		hash.update(source.getFullText());
+	}
+
+	return '__' + hash.digest("hex").substring(0, 8) + '__';
+}
 
 ts.createProgram = function(fileNames, compilerOptions, compilerHost): typescript.Program {
 	let program: typescript.Program;
@@ -42,7 +41,8 @@ ts.createProgram = function(fileNames, compilerOptions, compilerHost): typescrip
 	program.emit(undefined, (fileName, data, writeByteOrderMark, onError) => {});
 
 	let sources = program.getSourceFiles();
-	let source = sources.filter(s => s.fileName.match(/main\.ts/))[0];
+	let hash = calculateHash(program.getSourceFiles());
+	let covObjName = `__cov_${hash}_`;
 
 	let getSourceFileOriginal = compilerHost.getSourceFile;
 
@@ -54,24 +54,29 @@ ts.createProgram = function(fileNames, compilerOptions, compilerHost): typescrip
 
 console.log(fileName + ' -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= ');
 
-			let md5 = crypto.createHash('md5').update(source.getFullText()).digest("hex");
+			// let fileObjName = 
 
-			let statementNum = 0;
+			let statements = [];
 			let instrumentedSource = vc3(source, [], 0, false, (type: string, node: typescript.Node) => {
 				let fullStart = node.getFullStart() + node.getLeadingTriviaWidth();
 				let length = node.getWidth() - node.getLeadingTriviaWidth();
 
-				let r = `__cov__['${md5}'][${statementNum}]++`;
-				statementNum++;
+				statements.push({ s: fullStart, l: length, c: 0 });
 
-				return r;
+				return `${hash}.s[${statements.length - 1}].c++`;
 			});
 
 			let header = [];
-			header.push('let __cov__: any = (Function("return this"))().__cov__ ? (Function("return this"))().__cov__ : {};');
-			header.push(`if (!__cov__['${md5}']) __cov__['${md5}'] = {`);
-			header.push(`	s: ${JSON.stringify({})}`);
+
+			header.push(`let ${hash}: any = (Function('return this'))();`);
+			header.push(`if (!${hash}.__coverage__) ${hash}.__coverage__ = {};`);
+			header.push(`${hash} = ${hash}.__coverage__;`);
+			header.push(`if (!${hash}.${hash}) ${hash}.${hash} = {};`);
+			header.push(`${hash} = ${hash}.${hash};`);
+			header.push(`if (!${hash}['${fileName}']) ${hash}['${fileName}'] = {`);
+			header.push(`	s: ${JSON.stringify(statements)}`);
 			header.push(`};`);
+			header.push(`${hash} = ${hash}['${fileName}'];`);
 
 			instrumentedSource = header.join('\n') + instrumentedSource;
 
@@ -116,9 +121,10 @@ function vc3(node: typescript.Node,
 		let child = children[i];
 		let prefixChild = false;
 
-		if ((node.kind == sk.SyntaxList && (parent.kind == sk.SourceFile || parent.kind == sk.Block)) ||
-			child.kind == sk.CallExpression)
-		{
+		if ((node.kind == sk.SyntaxList && (parent.kind == sk.SourceFile || parent.kind == sk.Block))
+			// ||
+			// (child.kind == sk.CallExpression && node.kind != sk.VariableDeclaration)
+		) {
 			prefixChild = true;
 		}
 
@@ -151,8 +157,15 @@ function vc3(node: typescript.Node,
 
 				let childVisit = vc3(child, parents, depth + 1, true, report);
 
-				if (child.kind == sk.ExpressionStatement) childPrefix = `${report('statement', child)}; `;
-				else childPrefix = `${report('statement', child)}; `;
+				if (child.kind == sk.ExpressionStatement ||
+					child.kind == sk.CallExpression
+				) {
+					childPrefix = `${report('statement', child)}, `;
+				} else {
+					childPrefix = `${report('statement', child)}; `;
+				}
+
+				// childPrefix += `/*${sk[node.kind]},${sk[child.kind]}*/`;
 
 				r = childVisit.substring(0, tw) +
 					childPrefix +

@@ -19,7 +19,7 @@ b(() => {
     let q: any;
     let y: number = 22, u: number = 44;
     q = 123;
-    q = q + 1;
+    q = q +  1;
     q++;
     q = new Lib(234);
     q = null;
@@ -46,3 +46,7 @@ let obj = {
     a: 'asd',
     x: 123
 };
+
+let gl = (Function('return this'))();
+console.log(JSON.stringify(gl.__coverage__, null, 2));
+

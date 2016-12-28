@@ -57,26 +57,36 @@ console.log(fileName + ' -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= ');
 			// let fileObjName = 
 
 			let statements = [];
-			let instrumentedSource = vc3(source, [], 0, false, (type: string, node: typescript.Node) => {
-				let fullStart = node.getFullStart() + node.getLeadingTriviaWidth();
-				let length = node.getWidth() - node.getLeadingTriviaWidth();
+			let branches = [];
+			let instrumentedSource = vc3(source, [], 0, false,
+				(node: typescript.Node) => {
+					let fullStart = node.getFullStart() + node.getLeadingTriviaWidth();
+					let length = node.getFullWidth() - node.getLeadingTriviaWidth();
 
-				statements.push({ s: fullStart, l: length, c: 0 });
+					statements.push({ s: fullStart, l: length, c: 0 });
 
-				return `${hash}.s[${statements.length - 1}].c++`;
-			});
+					return `${hash}.s[${statements.length - 1}].c++`;
+				},
+				(node: typescript.Node) => {
+					let fullStart = node.getFullStart() + node.getLeadingTriviaWidth();
+					branches.push({ s: fullStart, c: [0, 0] });
 
-			let header = [];
+					return `${hash}.b[${branches.length - 1}].c`;
+				});
 
-			header.push(`let ${hash}: any = (Function('return this'))();`);
-			header.push(`if (!${hash}.__coverage__) ${hash}.__coverage__ = {};`);
-			header.push(`${hash} = ${hash}.__coverage__;`);
-			header.push(`if (!${hash}.${hash}) ${hash}.${hash} = {};`);
-			header.push(`${hash} = ${hash}.${hash};`);
-			header.push(`if (!${hash}['${fileName}']) ${hash}['${fileName}'] = {`);
-			header.push(`	s: ${JSON.stringify(statements)}`);
-			header.push(`};`);
-			header.push(`${hash} = ${hash}['${fileName}'];`);
+			let header = [
+				`let ${hash}: any = (Function('return this'))();`,
+				`if (!${hash}.__coverage__) ${hash}.__coverage__ = {};`,
+				`${hash} = ${hash}.__coverage__;`,
+				`if (!${hash}.${hash}) ${hash}.${hash} = {};`,
+				`${hash} = ${hash}.${hash};`,
+				`if (!${hash}['${fileName}']) ${hash}['${fileName}'] = {`,
+				`	s: ${JSON.stringify(statements)},`,
+				`	b: ${JSON.stringify(branches)}`,
+				`};`,
+				`${hash} = ${hash}['${fileName}'];`,
+				``
+			];
 
 			instrumentedSource = header.join('\n') + instrumentedSource;
 
@@ -98,7 +108,8 @@ function vc3(node: typescript.Node,
 	parents: typescript.Node[],
 	depth: number,
 	prefixed: boolean,
-	report: (type: string, node: typescript.Node) => string)
+	reportStatement: (node: typescript.Node) => string,
+	reportBranch: (node: typescript.Node) => string)
 {
 	if (!node) return '';
 
@@ -128,8 +139,6 @@ function vc3(node: typescript.Node,
 			prefixChild = true;
 		}
 
-		// let childVisit = vc3(child, parents, depth + 1, prefixChild || (prefixed && i == 0));
-
 		let tw = node.getLeadingTriviaWidth();
 		let childPrefix = '';
 		let r = '';
@@ -139,30 +148,32 @@ function vc3(node: typescript.Node,
 			if (child.kind == sk.IfStatement) {
 
 				let ifStatement = child as typescript.IfStatement;
-				let expVisit = vc3(ifStatement.expression, parents, depth + 1, false, report);
-				let thenVisit = vc3(ifStatement.thenStatement, parents, depth + 1, false, report);
-				let elseVisit = vc3(ifStatement.elseStatement, parents, depth + 1, false, report);
+				let expVisit = vc3(ifStatement.expression, parents, depth + 1, false, reportStatement, reportBranch);
+				let thenVisit = vc3(ifStatement.thenStatement, parents, depth + 1, false, reportStatement, reportBranch);
+				let elseVisit = vc3(ifStatement.elseStatement, parents, depth + 1, false, reportStatement, reportBranch);
 
-				r = `if (${expVisit}) { ${report('statement', child)}; ${thenVisit} } else { ${report('statement', child)}; ${elseVisit} }`;
+				let branch = reportBranch(ifStatement);
+
+				r = `if (${expVisit}) { ${branch}[0]++; ${thenVisit} } else { ${branch}[1]++; ${elseVisit} }`;
 
 			} else if (node.kind == sk.ArrowFunction && child.kind == sk.CallExpression) {
 
-				let childVisit = vc3(child, parents, depth + 1, true, report);
+				let childVisit = vc3(child, parents, depth + 1, true, reportStatement, reportBranch);
 				r = childVisit.substring(0, tw) +
-					`{ return ${report('statement', child)}, ` +
+					`{ return ${reportStatement(child)}, ` +
 					childVisit.substring(tw).replace(/^\s/, '') +
 					'}';
 
 			} else {
 
-				let childVisit = vc3(child, parents, depth + 1, true, report);
+				let childVisit = vc3(child, parents, depth + 1, true, reportStatement, reportBranch);
 
 				if (child.kind == sk.ExpressionStatement ||
 					child.kind == sk.CallExpression
 				) {
-					childPrefix = `${report('statement', child)}, `;
+					childPrefix = `${reportStatement(child)}, `;
 				} else {
-					childPrefix = `${report('statement', child)}; `;
+					childPrefix = `${reportStatement(child)}; `;
 				}
 
 				// childPrefix += `/*${sk[node.kind]},${sk[child.kind]}*/`;
@@ -174,7 +185,7 @@ function vc3(node: typescript.Node,
 			}
 
 		} else {
-			r = vc3(child, parents, depth + 1, prefixChild || (prefixed && i == 0), report);
+			r = vc3(child, parents, depth + 1, prefixChild || (prefixed && i == 0), reportStatement, reportBranch);
 		}
 
 		p.push(r);
@@ -184,158 +195,6 @@ function vc3(node: typescript.Node,
 
 	return p.join('');	
 }
-
-// function visitChildren(node: typescript.Node, depth: number): string {
-// 	let children = node.getChildren();
-// 	let nodeText = node.getFullText();
-
-// 	if (children.length === 0) return nodeText;
-
-// 	let p = [];
-// 	for (let child of children) {
-// 		let childVisit = visitNode(child, node, depth + 1);
-// 		p.push(childVisit);
-// 	}
-
-// 	return p.join('');
-// }
-
-// function visitNode(node: typescript.Node, parent: typescript.Node, depth: number): string {
-// 	let cc = '';
-// 	let tw = node.getLeadingTriviaWidth();
-// 	let start = node.getFullStart() + tw;
-// 	let width = node.getFullWidth() - tw;
-
-// 	// let path = this.treeVisitor.relPath;
-
-// 	// console.log(whitespace(depth * 2, ' ') + depth + '  ' + node.getChildCount() + ' ' + sk[node.kind]);
-// 	console.log(whitespace(depth * 2, ' ') + sk[node.kind]);
-
-// 	switch (node.kind) {
-
-// 		case sk.ClassDeclaration:
-// 			cc = visitChildren(node, depth);
-// 			return `${cc.substring(0, tw)}/*CLASS++*/${cc.substring(tw)}`;
-
-// 		case sk.FunctionDeclaration:
-// 			cc = visitChildren(node, depth);
-// 			return `${cc.substring(0, tw)}/*FUNC++*/${cc.substring(tw)}`;
-
-// 		case sk.IfStatement:
-// 			// cc = visitChildren(node, depth);
-// 			// return `${cc.substring(0, tw)}/*if++*/${cc.substring(tw)}`;
-
-// 			let ifStatement = node as typescript.IfStatement;
-// 			cc = node.getFullText();
-
-// 			return `${cc.substring(0, tw)}if (${visitNode(ifStatement.expression, node, depth)}) ` + 
-// 				`{/*THEN++;*/ ${visitNode(ifStatement.thenStatement, node, depth)} } ` +
-// 				`else {/*ELSE++;*/ ${visitNode(ifStatement.elseStatement, node, depth)} }`;
-
-// 			// case typescript.SyntaxKind.ForOfStatement:
-// 			// 	let s = this.node as typescript.ForOfStatement;
-// 			// 	cc = this.visitChildren();
-// 			// 	this.treeVisitor.reportLocation(start, width);
-// 			// 	return `${cc.substring(0, tw)}__coverage__.C('${path}', ${start}, ${width});${this.ntChildCode()}`;
-
-// 		case sk.CallExpression:
-
-// 			cc = visitChildren(node, depth);
-// 			//let locInc = this.treeVisitor.reportStatement(start, width);
-// 			// return `${cc.substring(0, tw)}(${123}, ${cc.substring(tw)})`;
-// 			return `${cc.substring(0, tw)}/*CALL++*/${cc.substring(tw)}`;
-
-// 		// case typescript.SyntaxKind.BinaryExpression:
-// 		// 	this.treeVisitor.reportLocation(start, width);
-// 		// 	return `__coverage__.C('${path}', ${start}, ${width}, ${this.visitChildren()})`;
-
-// 		// case sk.FirstAssignment:
-// 		// 	// let binaryExpression = node as typescript.;
-// 		// 	// console.log(binaryExpression); 
-// 		// 	cc = visitChildren(node, depth);
-// 		// 	return `${cc.substring(0, tw)}/*ASSIGN++*/${cc.substring(tw)}`;
-
-// 		// case sk.BinaryExpression:
-// 		// 	let binaryExpression = node as typescript.BinaryExpression;
-// 		// 	// console.log('----------');
-// 		// 	// console.log(binaryExpression.getFullText());
-// 		// 	// console.log(sk[binaryExpression.operatorToken.kind]);
-
-// 		// 	if (binaryExpression.operatorToken.kind == sk.FirstAssignment ||
-// 		// 		binaryExpression.operatorToken.kind == sk.FirstCompoundAssignment) {
-// 		// 		// if (binaryExpression.) 
-// 		// 		cc = visitChildren(node, depth);
-// 		// 		return `${cc.substring(0, tw)}/*EXPRESS++*/${cc.substring(tw)}`;
-// 		// 	}
-
-// 		case sk.LetKeyword:
-// 			cc = visitChildren(node, depth);
-// 			return `${cc.substring(0, tw)}/*VAR++*/${cc.substring(tw)}`;
-
-// 		default: //return visitChildren(node, depth);
-// 			return visitChildren(node, depth);
-// 	}
-// }
-
-// function visitSource(source: typescript.SourceFile): string {
-// 	// let r = visitChildren(source, 0);
-// 	let r = visitNode2(source, null);
-// 	console.log(r);
-// 	return r;
-// }
-
-// function vc(...args: any[]) {
-
-// }
-
-// function v(node: typescript.Node, parent: typescript.Node) {
-// 	vc(node, parent, {
-// 		'SourceFile': (n, p) => vc(n, {
-// 			'SyntaxList': (s, p) => vc(s, {}, '')
-// 		})
-// 	});
-// }
-
-// function visitNode2(node: typescript.Node, parent: typescript.Node, depth: number = 0): string {
-// 	let r = '';
-
-// 	r += visitChildren2(node, depth, [
-// 		{
-// 			kind: sk.SourceFile,
-// 			func: (n, p, d) => {
-// 				// let s = [];
-// 				// for (let child of n.getChildren()) {
-// 				// 	s.push(child);
-// 				// } 
-// 				// return s.join('');
-// 				return visitNode2(n, p, d);
-// 			}
-// 		}
-// 	]);
-
-// 	return r;
-// }
-
-// function visitChildren2(node: typescript.Node, depth: number, mapFns: { kind: number, func: (n: typescript.Node, p: typescript.Node, depth: number) => string }[]): string {
-// 	let children = node.getChildren();
-// 	let nodeText = node.getFullText();
-
-// 	if (children.length === 0) return nodeText;
-
-// 	let p = [];
-// 	for (let child of children) {
-// 		let fn = null;
-// 		for (let mapFn of mapFns) {
-// 			if (child.kind == mapFn.kind) fn = mapFn;
-// 		}
-
-// 		let childVisit = fn ? fn.func(child, node, depth + 1) : visitNode2(child, node, depth + 1);
-// 		p.push(childVisit);
-// 	}
-
-// 	return p.join('');
-// }
-
 
 ts.executeCommandLine(ts.sys.args);
 

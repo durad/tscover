@@ -128,67 +128,71 @@ function vc3(node: typescript.Node,
 
 	let p = [];
 
-	for (let i = 0; i < children.length; i++) {
-		let child = children[i];
-		let prefixChild = false;
+	if (node.kind === sk.IfStatement) {
 
-		if ((node.kind == sk.SyntaxList && (parent.kind == sk.SourceFile || parent.kind == sk.Block))
-			// ||
-			// (child.kind == sk.CallExpression && node.kind != sk.VariableDeclaration)
-		) {
-			prefixChild = true;
-		}
+		let ifStatement = node as typescript.IfStatement;
+		let expVisit = vc3(ifStatement.expression, parents, depth + 1, false, reportStatement, reportBranch);
+		let thenVisit = vc3(ifStatement.thenStatement, parents, depth + 1, false, reportStatement, reportBranch);
+		let elseVisit = vc3(ifStatement.elseStatement, parents, depth + 1, false, reportStatement, reportBranch);
 
-		let tw = node.getLeadingTriviaWidth();
-		let childPrefix = '';
-		let r = '';
+		let branch = reportBranch(ifStatement);
 
-		if (!prefixed && prefixChild) {
+		let r = node.getFullText().substring(0, node.getLeadingTriviaWidth()) + `if (${expVisit}) { ${branch}[0]++; ${thenVisit} } else { ${branch}[1]++; ${elseVisit} } `;
+		p.push(r);
 
-			if (child.kind == sk.IfStatement) {
+	} else {
 
-				let ifStatement = child as typescript.IfStatement;
-				let expVisit = vc3(ifStatement.expression, parents, depth + 1, false, reportStatement, reportBranch);
-				let thenVisit = vc3(ifStatement.thenStatement, parents, depth + 1, false, reportStatement, reportBranch);
-				let elseVisit = vc3(ifStatement.elseStatement, parents, depth + 1, false, reportStatement, reportBranch);
+		for (let i = 0; i < children.length; i++) {
+			let child = children[i];
+			let prefixChild = false;
 
-				let branch = reportBranch(ifStatement);
-
-				r = `if (${expVisit}) { ${branch}[0]++; ${thenVisit} } else { ${branch}[1]++; ${elseVisit} }`;
-
-			} else if (node.kind == sk.ArrowFunction && child.kind == sk.CallExpression) {
-
-				let childVisit = vc3(child, parents, depth + 1, true, reportStatement, reportBranch);
-				r = childVisit.substring(0, tw) +
-					`{ return ${reportStatement(child)}, ` +
-					childVisit.substring(tw).replace(/^\s/, '') +
-					'}';
-
-			} else {
-
-				let childVisit = vc3(child, parents, depth + 1, true, reportStatement, reportBranch);
-
-				if (child.kind == sk.ExpressionStatement ||
-					child.kind == sk.CallExpression
-				) {
-					childPrefix = `${reportStatement(child)}, `;
-				} else {
-					childPrefix = `${reportStatement(child)}; `;
-				}
-
-				// childPrefix += `/*${sk[node.kind]},${sk[child.kind]}*/`;
-
-				r = childVisit.substring(0, tw) +
-					childPrefix +
-					childVisit.substring(tw);
-
+			if ((node.kind == sk.SyntaxList && (parent.kind == sk.SourceFile || parent.kind == sk.Block))
+				// ||
+				// (child.kind == sk.CallExpression && node.kind != sk.VariableDeclaration)
+			) {
+				prefixChild = true;
 			}
 
-		} else {
-			r = vc3(child, parents, depth + 1, prefixChild || (prefixed && i == 0), reportStatement, reportBranch);
-		}
+			let tw = node.getLeadingTriviaWidth();
+			let childPrefix = '';
+			let r = '';
 
-		p.push(r);
+			if (!prefixed && prefixChild) {
+
+				if (node.kind == sk.ArrowFunction && child.kind == sk.CallExpression) {
+
+					let childVisit = vc3(child, parents, depth + 1, true, reportStatement, reportBranch);
+					r = childVisit.substring(0, tw) +
+						`{ return ${reportStatement(child)}, ` +
+						childVisit.substring(tw).replace(/^\s/, '') +
+						'}';
+
+				} else {
+
+					let childVisit = vc3(child, parents, depth + 1, true, reportStatement, reportBranch);
+
+					if (child.kind == sk.ExpressionStatement ||
+						child.kind == sk.CallExpression
+					) {
+						childPrefix = `${reportStatement(child)}, `;
+					} else {
+						childPrefix = `${reportStatement(child)}; `;
+					}
+
+					// childPrefix += `/*${sk[node.kind]},${sk[child.kind]}*/`;
+
+					r = childVisit.substring(0, tw) +
+						childPrefix +
+						childVisit.substring(tw);
+
+				}
+
+			} else {
+				r = vc3(child, parents, depth + 1, prefixChild || (prefixed && i == 0), reportStatement, reportBranch);
+			}
+
+			p.push(r);
+		}
 	}
 
 	parents.pop();

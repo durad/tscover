@@ -42,11 +42,19 @@ if (x % 3 == 0) {
     console.log('Fizz again...');
 } else console.log('Buzz');
 
+if (x % 5 == 0) {
+    console.log('555');
+} else {
+    console.log('666');
+    console.log('777');
+}
+
 let obj = {
     a: 'asd',
     x: 123
 };
 
 let gl = (Function('return this'))();
-console.log(JSON.stringify(gl.__coverage__, null, 2));
+gl.__coverage__.saveLcov();
+// console.log(JSON.stringify(gl.__coverage__, null, 2));
 

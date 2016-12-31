@@ -52,43 +52,37 @@ ts.createProgram = function(fileNames, compilerOptions, compilerHost): typescrip
 
 		if (fileName.match(/\.ts$/) && !fileName.match(/\.d\.ts$/) && source) {
 
-console.log(fileName + ' -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= ');
+console.log(fileName + ' -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=  ');
 
 			// let fileObjName = 
 
 			let statements = [];
 			let branches = [];
-			let instrumentedSource = vc3(source, [], 0, false,
+			let instrumentedSource = vn(source, { kind: null }, { kind: null }, 0, 0, false,
 				(node: typescript.Node) => {
 					let fullStart = node.getFullStart() + node.getLeadingTriviaWidth();
-					let length = node.getFullWidth() - node.getLeadingTriviaWidth();
+					let pos = node.getSourceFile().getLineAndCharacterOfPosition(fullStart);
 
-					statements.push({ s: fullStart, l: length, c: 0 });
+					statements.push({ s: fullStart, l: pos.line, c: 0 });
 
 					return `${hash}.s[${statements.length - 1}].c++`;
 				},
 				(node: typescript.Node) => {
 					let fullStart = node.getFullStart() + node.getLeadingTriviaWidth();
-					branches.push({ s: fullStart, c: [0, 0] });
+					let pos = node.getSourceFile().getLineAndCharacterOfPosition(fullStart);
+					branches.push({ s: fullStart, l: pos.line, c: [0, 0] });
 
 					return `${hash}.b[${branches.length - 1}].c`;
 				});
 
-			let header = [
-				`let ${hash}: any = (Function('return this'))();`,
-				`if (!${hash}.__coverage__) ${hash}.__coverage__ = {};`,
-				`${hash} = ${hash}.__coverage__;`,
-				`if (!${hash}.${hash}) ${hash}.${hash} = {};`,
-				`${hash} = ${hash}.${hash};`,
-				`if (!${hash}['${fileName}']) ${hash}['${fileName}'] = {`,
-				`	s: ${JSON.stringify(statements)},`,
-				`	b: ${JSON.stringify(branches)}`,
-				`};`,
-				`${hash} = ${hash}['${fileName}'];`,
-				``
-			];
+			let header = fs.readFileSync('header.ts', 'utf8')
+				.split('// ---split---')[1]
+				.replace(/__hash__/ig, hash)
+				.replace(/__filename__/ig, fileName)
+				.replace(/__statements__/ig, JSON.stringify(statements))
+				.replace(/__branches__/ig, JSON.stringify(branches));
 
-			instrumentedSource = header.join('\n') + instrumentedSource;
+			instrumentedSource = header + instrumentedSource;
 
 console.log(instrumentedSource);
 
@@ -104,100 +98,51 @@ console.log(instrumentedSource);
 	return program;
 };
 
-function vc3(node: typescript.Node,
-	parents: typescript.Node[],
+function vn(node: typescript.Node,
+	parent: typescript.Node | { kind: any },
+	grandParent: typescript.Node | { kind: any },
 	depth: number,
+	index: number,
 	prefixed: boolean,
 	reportStatement: (node: typescript.Node) => string,
-	reportBranch: (node: typescript.Node) => string)
+	reportBranch: (node: typescript.Node) => string): string
 {
 	if (!node) return '';
 
-	let parent = parents.length >= 1 ? parents[parents.length - 1] : { kind: null };
-	let grandParent = parents.length >= 2 ? parents[parents.length - 2] : { kind: null };
-	let grandGrandParent = parents.length >= 3 ? parents[parents.length - 3] : { kind: null };
-
-// console.log(whitespace(depth * 2, ' ') + sk[node.kind] + ' ' + sk[parent.kind] + ' ' + sk[grandParent.kind]);
-
 	let children = node.getChildren();
 	let nodeText = node.getFullText();
+	let trivia = node.getFullText().substring(0, node.getLeadingTriviaWidth());
+	let nodePrefix = '';
+	let childVisit = '';
 
 	if (children.length === 0) return nodeText;
 
-	parents.push(node);
-
-	let p = [];
+	if (!prefixed && parent.kind === sk.SyntaxList && (grandParent.kind === sk.SourceFile || grandParent.kind === sk.Block)) {
+		nodePrefix = reportStatement(node) + ((node.kind == sk.ExpressionStatement || node.kind == sk.CallExpression) ? ', ' : '; ');
+	}
 
 	if (node.kind === sk.IfStatement) {
 
 		let ifStatement = node as typescript.IfStatement;
-		let expVisit = vc3(ifStatement.expression, parents, depth + 1, false, reportStatement, reportBranch);
-		let thenVisit = vc3(ifStatement.thenStatement, parents, depth + 1, false, reportStatement, reportBranch);
-		let elseVisit = vc3(ifStatement.elseStatement, parents, depth + 1, false, reportStatement, reportBranch);
+		let expVisit = vn(ifStatement.expression, ifStatement, parent, depth + 1, 0, false, reportStatement, reportBranch);
+		let thenVisit = vn(ifStatement.thenStatement, ifStatement, parent, depth + 1, 0, false, reportStatement, reportBranch);
+		let elseVisit = vn(ifStatement.elseStatement, ifStatement, parent, depth + 1, 0, false, reportStatement, reportBranch);
 
 		let branch = reportBranch(ifStatement);
-
-		let r = node.getFullText().substring(0, node.getLeadingTriviaWidth()) + `if (${expVisit}) { ${branch}[0]++; ${thenVisit} } else { ${branch}[1]++; ${elseVisit} } `;
-		p.push(r);
+		childVisit = trivia + `if (${expVisit}) { ${branch}[0]++; ${thenVisit} } else { ${branch}[1]++; ${elseVisit} } `;
 
 	} else {
 
+		let p = [];
 		for (let i = 0; i < children.length; i++) {
-			let child = children[i];
-			let prefixChild = false;
-
-			if ((node.kind == sk.SyntaxList && (parent.kind == sk.SourceFile || parent.kind == sk.Block))
-				// ||
-				// (child.kind == sk.CallExpression && node.kind != sk.VariableDeclaration)
-			) {
-				prefixChild = true;
-			}
-
-			let tw = node.getLeadingTriviaWidth();
-			let childPrefix = '';
-			let r = '';
-
-			if (!prefixed && prefixChild) {
-
-				if (node.kind == sk.ArrowFunction && child.kind == sk.CallExpression) {
-
-					let childVisit = vc3(child, parents, depth + 1, true, reportStatement, reportBranch);
-					r = childVisit.substring(0, tw) +
-						`{ return ${reportStatement(child)}, ` +
-						childVisit.substring(tw).replace(/^\s/, '') +
-						'}';
-
-				} else {
-
-					let childVisit = vc3(child, parents, depth + 1, true, reportStatement, reportBranch);
-
-					if (child.kind == sk.ExpressionStatement ||
-						child.kind == sk.CallExpression
-					) {
-						childPrefix = `${reportStatement(child)}, `;
-					} else {
-						childPrefix = `${reportStatement(child)}; `;
-					}
-
-					// childPrefix += `/*${sk[node.kind]},${sk[child.kind]}*/`;
-
-					r = childVisit.substring(0, tw) +
-						childPrefix +
-						childVisit.substring(tw);
-
-				}
-
-			} else {
-				r = vc3(child, parents, depth + 1, prefixChild || (prefixed && i == 0), reportStatement, reportBranch);
-			}
-
-			p.push(r);
+			p.push(vn(children[i], node, parent, depth + 1, i, false, reportStatement, reportBranch));
 		}
+
+		childVisit = p.join('');
+
 	}
 
-	parents.pop();
-
-	return p.join('');	
+	return trivia + nodePrefix + childVisit.substring(trivia.length);
 }
 
 ts.executeCommandLine(ts.sys.args);

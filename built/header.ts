@@ -6,14 +6,19 @@ let __hash__: any = (Function('return this'))();
 if (!__hash__.__coverage__) __hash__.__coverage__ = {};
 __hash__ = __hash__.__coverage__;
 
-if (!__hash__.saveLcov) __hash__.generateLcov = function() {
+if (!__hash__.saveLcov) __hash__.generateLcov = function(pathRemap = []) {
     let g: any = (Function('return this'))();
     let p = [];
     let c: any = {};
     for (let k in g.__coverage__) c = g.__coverage__[k];
     for (let f in c) {
+        let ff = f;
+        for (let r of pathRemap) {
+            ff = ff.replace(r[0], r[1]);
+        }
+
         p.push('TN:');
-        p.push('SF:' + f);
+        p.push('SF:' + ff);
         p.push('FNF:0');
         p.push('FNH:0');
 
@@ -43,19 +48,19 @@ if (!__hash__.saveLcov) __hash__.generateLcov = function() {
         p.push('end_of_record');
     }
 
-    return p.join('\n').replace(/\/home\/dusan/ig, 'y:');
+    return p.join('\n');
 }
 
-if (!__hash__.saveLcov) __hash__.saveLcov = function(fileName = 'lcov.info') {
+if (!__hash__.saveLcov) __hash__.saveLcov = function(lcovPath = 'lcov.info', pathRemap = []) {
     let g: any = (Function('return this'))();
     let fs;
     let r = eval('require');
     if (typeof r === 'function') fs = r('fs');
     else throw new Error('Cannot access require function.');
 
-    let v = g.__coverage__.generateLcov();
-    fs.writeFileSync(fileName, v, 'utf8');
-    fs.writeFileSync(fileName + '.json', JSON.stringify(g.__coverage__, null, 2), 'utf8');
+    let v = g.__coverage__.generateLcov(pathRemap);
+    fs.writeFileSync(lcovPath, v, 'utf8');
+    fs.writeFileSync(lcovPath + '.json', JSON.stringify(g.__coverage__, null, 2), 'utf8');
 }
 
 if (!__hash__.__hash__) __hash__.__hash__ = {};

@@ -42,7 +42,7 @@ if (x % 3 == 0) {
     console.log('Fizz again...');
 } else console.log('Buzz');
 
-if (x % 5 == 0) {
+if (1 > 0) {
     console.log('555');
 } else {
     console.log('666');
@@ -55,6 +55,6 @@ let obj = {
 };
 
 let gl = (Function('return this'))();
-gl.__coverage__.saveLcov();
+gl.__coverage__.saveLcov('/home/dusan/tscover/coverage/lcov.info', [['/home/dusan/', 'y:/']]);
 // console.log(JSON.stringify(gl.__coverage__, null, 2));
 

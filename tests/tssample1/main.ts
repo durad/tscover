@@ -54,7 +54,33 @@ let obj = {
     x: 123
 };
 
+class A {
+    constructor() {
+        console.log('A.constructor');
+    }
+}
+
+class B extends A {
+    f = 123;
+
+    constructor() {
+        super();
+        console.log('B.constructor');
+    }
+}
+
+class C extends A {
+    constructor() {
+        let ggg = 0;
+        super();
+    }
+}
+
+let bObj = new B();
+let cObj = new C();
+
+console.log(8888);
+
 let gl = (Function('return this'))();
 gl.__coverage__.saveLcov('/home/dusan/tscover/coverage/lcov.info', [['/home/dusan/', 'y:/']]);
 // console.log(JSON.stringify(gl.__coverage__, null, 2));
-

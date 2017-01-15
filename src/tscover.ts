@@ -52,10 +52,6 @@ ts.createProgram = function(fileNames, compilerOptions, compilerHost): typescrip
 
 		if (fileName.match(/\.ts$/) && !fileName.match(/\.d\.ts$/) && source) {
 
-console.log(fileName + ' -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=  ');
-
-			// let fileObjName = 
-
 			let statements = [];
 			let branches = [];
 			let instrumentedSource = vn(source, { kind: null }, { kind: null }, 0, 0, false,
@@ -83,8 +79,6 @@ console.log(fileName + ' -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=  ');
 				.replace(/__branches__/ig, JSON.stringify(branches));
 
 			instrumentedSource = header + instrumentedSource;
-
-console.log(instrumentedSource);
 
 			return ts.createSourceFile(fileName, instrumentedSource, languageVersion);
 		}
@@ -117,7 +111,24 @@ function vn(node: typescript.Node,
 
 	if (children.length === 0) return nodeText;
 
-	if (!prefixed && parent.kind === sk.SyntaxList && (grandParent.kind === sk.SourceFile || grandParent.kind === sk.Block)) {
+	let isFirstSuper = false;
+	if (
+		index === 0 &&
+		node.kind === sk.ExpressionStatement &&
+		children.length >= 1 &&
+		children[0].kind === sk.CallExpression
+	) {
+		let callExprChild = children[0] as typescript.CallExpression;
+		if (callExprChild.getChildCount() >= 0 && callExprChild.getChildAt(0).kind === sk.SuperKeyword) {
+			isFirstSuper = true;
+		}
+	}
+
+	if (!prefixed &&
+		parent.kind === sk.SyntaxList &&
+		(grandParent.kind === sk.SourceFile || grandParent.kind === sk.Block) &&
+		!isFirstSuper
+	) {
 		nodePrefix = reportStatement(node) + ((node.kind == sk.ExpressionStatement || node.kind == sk.CallExpression) ? ', ' : '; ');
 	}
 

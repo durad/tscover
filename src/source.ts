@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as typescript from 'typescript';
 
+import { ProjectInstrumenter } from './project';
+
 export class SourceInstrumenter {
 	sk: any;
 	hash: string;
@@ -19,9 +21,9 @@ export class SourceInstrumenter {
 	 * @param fileName File name of the current source
 	 * @param source SourceFile node that we will instrument
 	 */
-	constructor(sk: any, hash: string, fileName: string, source: typescript.SourceFile) {
-		this.sk = sk;
-		this.hash = hash;
+	constructor(project: ProjectInstrumenter, fileName: string, source: typescript.SourceFile) {
+		this.sk = project.sk;
+		this.hash = project.hash;
 		this.fileName = fileName;
 		this.source = source;
 	}

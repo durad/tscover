@@ -1,2 +1,2 @@
-*.js
 **/lcov.info*
+npm-debug.log

@@ -1,0 +1,28 @@
+{
+  "name": "tscover",
+  "version": "0.0.1",
+  "description": "Code covrage for TypeScript",
+  "main": "build/index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/durad/tscover.git"
+  },
+  "keywords": [
+    "code",
+    "coverage",
+    "typescript",
+    "ts"
+  ],
+  "author": "Dusan Radovanovic",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/durad/tscover/issues"
+  },
+  "homepage": "https://github.com/durad/tscover#readme"
+}

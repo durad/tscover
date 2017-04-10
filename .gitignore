@@ -1,4 +1,5 @@
 **/lcov.info*
-npm-debug.log
+**/npm-debug.log
 *.js
 !build/*.js
+!bin/*.js

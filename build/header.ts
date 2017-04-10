@@ -1,20 +1,19 @@
 let __statements__ = null;
 let __branches__ = null;
-let __coverage__ = null;
 // ---split---
 let __hash__: any = (Function('return this'))();
 if (!__hash__.__coverage__) __hash__.__coverage__ = {};
 __hash__ = __hash__.__coverage__;
 
-if (!__hash__.saveLcov) __hash__.generateLcov = function(pathRemap = []) {
+if (!__hash__.saveLcov) __hash__.generateLcov = function(pathRemap) {
     let g: any = (Function('return this'))();
     let p = [];
     let c: any = {};
     for (let k in g.__coverage__) c = g.__coverage__[k];
     for (let f in c) {
         let ff = f;
-        for (let r of pathRemap) {
-            ff = ff.replace(r[0], r[1]);
+        if (pathRemap) {
+            ff = ff.replace(pathRemap.from, pathRemap.to);
         }
 
         p.push('TN:');
@@ -51,7 +50,7 @@ if (!__hash__.saveLcov) __hash__.generateLcov = function(pathRemap = []) {
     return p.join('\n');
 }
 
-if (!__hash__.saveLcov) __hash__.saveLcov = function(lcovPath = 'lcov.info', pathRemap = []) {
+if (!__hash__.saveLcov) __hash__.saveLcov = function(lcovPath = 'lcov.info', pathRemap: any) {
     let g: any = (Function('return this'))();
     let fs;
     let r = eval('require');

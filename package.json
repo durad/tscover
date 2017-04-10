@@ -1,6 +1,6 @@
 {
   "name": "tscover",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Code covrage for TypeScript",
   "bin": {
     "tscover": "bin/tscover.js"

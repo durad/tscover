@@ -6,6 +6,7 @@
     "tscover": "bin/tscover.js"
   },
   "files": [
+    "bin/",
     "build/"
   ],
   "directories": {

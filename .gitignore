@@ -1,2 +1,4 @@
 **/lcov.info*
 npm-debug.log
+*.js
+!build/*.js

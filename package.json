@@ -2,7 +2,12 @@
   "name": "tscover",
   "version": "0.0.1",
   "description": "Code covrage for TypeScript",
-  "main": "build/index.js",
+  "bin": {
+    "tscover": "bin/tscover.js"
+  },
+  "files": [
+    "build/"
+  ],
   "directories": {
     "test": "tests"
   },

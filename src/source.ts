@@ -24,7 +24,7 @@ export class SourceInstrumenter {
 	constructor(project: ProjectInstrumenter, fileName: string, source: typescript.SourceFile) {
 		this.sk = project.sk;
 		this.hash = project.hash;
-		this.fileName = fileName;
+		this.fileName = path.resolve(fileName);
 		this.source = source;
 	}
 

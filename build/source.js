@@ -12,7 +12,7 @@ var SourceInstrumenter = (function () {
     function SourceInstrumenter(project, fileName, source) {
         this.sk = project.sk;
         this.hash = project.hash;
-        this.fileName = fileName;
+        this.fileName = path.resolve(fileName);
         this.source = source;
     }
     /**

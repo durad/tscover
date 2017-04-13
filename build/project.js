@@ -2,24 +2,12 @@
 var fs = require("fs");
 var path = require("path");
 var vm = require("vm");
-var crypto = require("crypto");
 var typescript = require("typescript");
+var util_1 = require("./util");
 var source_1 = require("./source");
 var ProjectInstrumenter = (function () {
     function ProjectInstrumenter() {
     }
-    /**
-     * Calculates a hash for a given array of source files
-     * @param sources Array of source file nodes to calculate hash for
-     */
-    ProjectInstrumenter.prototype.calculateHash = function (sources) {
-        var hash = crypto.createHash('md5');
-        for (var _i = 0, sources_1 = sources; _i < sources_1.length; _i++) {
-            var source = sources_1[_i];
-            hash.update(source.getFullText());
-        }
-        return '__' + hash.digest("hex").substring(0, 8) + '__';
-    };
     /**
      * Main entry point into compilation process
      */
@@ -43,8 +31,7 @@ var ProjectInstrumenter = (function () {
             program = typescript.createProgram(fileNames, compilerOptions);
             program.emit(undefined, function (fileName, data, writeByteOrderMark, onError) { });
             var sources = program.getSourceFiles();
-            _this.hash = _this.calculateHash(program.getSourceFiles());
-            var covObjName = "__cov_" + _this.hash + "_";
+            _this.hash = util_1.Util.calculateHash(program.getSourceFiles());
             // getSourceFile gets syntax tree of the source file. We are hijacking this to insert instrumentaion logic
             var getSourceFileOriginal = compilerHost.getSourceFile;
             compilerHost.getSourceFile = function (fileName, languageVersion, onError) {

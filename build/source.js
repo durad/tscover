@@ -1,6 +1,7 @@
 "use strict";
 var fs = require("fs");
 var path = require("path");
+var util_1 = require("./util");
 var SourceInstrumenter = (function () {
     /**
      * Constructs SourceInstrumenter instance
@@ -10,8 +11,9 @@ var SourceInstrumenter = (function () {
      * @param source SourceFile node that we will instrument
      */
     function SourceInstrumenter(project, fileName, source) {
+        this.project = project;
         this.sk = project.sk;
-        this.hash = project.hash;
+        this.hash = util_1.Util.calculateHash([source]);
         this.fileName = path.resolve(fileName);
         this.source = source;
     }
@@ -25,11 +27,14 @@ var SourceInstrumenter = (function () {
         // prepend header to instrumented source
         var header = fs.readFileSync(path.join(__dirname, 'header.ts'), 'utf8')
             .split('// ---split---')[1]
-            .replace(/__hash__/ig, this.hash)
-            .replace(/__filename__/ig, this.fileName)
-            .replace(/__statements__/ig, JSON.stringify(this.statements))
-            .replace(/__branches__/ig, JSON.stringify(this.branches));
+            .replace(/__projectHash__/g, this.project.hash)
+            .replace(/__fileHash__/g, this.hash)
+            .replace(/__filename__/g, this.fileName)
+            .replace(/__statements__/g, JSON.stringify(this.statements))
+            .replace(/__branches__/g, JSON.stringify(this.branches))
+            .replace(/__sourceCode__/g, JSON.stringify(this.source.getFullText()));
         this.instrumentedSource = header + this.instrumentedSource;
+        // fs.writeFileSync(this.fileName + '.covered', this.instrumentedSource);
     };
     /**
      * Called for every statement found in the source. Returns instrumentation statement prefix.

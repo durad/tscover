@@ -2,10 +2,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as typescript from 'typescript';
-
 import { ProjectInstrumenter } from './project';
+import { Util } from './util';
 
 export class SourceInstrumenter {
+	project: ProjectInstrumenter;
 	sk: any;
 	hash: string;
 	fileName: string;
@@ -22,8 +23,9 @@ export class SourceInstrumenter {
 	 * @param source SourceFile node that we will instrument
 	 */
 	constructor(project: ProjectInstrumenter, fileName: string, source: typescript.SourceFile) {
+		this.project = project;
 		this.sk = project.sk;
-		this.hash = project.hash;
+		this.hash = Util.calculateHash([source]);
 		this.fileName = path.resolve(fileName);
 		this.source = source;
 	}
@@ -40,12 +42,16 @@ export class SourceInstrumenter {
 		// prepend header to instrumented source
 		let header = fs.readFileSync(path.join(__dirname, 'header.ts'), 'utf8')
 			.split('// ---split---')[1]
-			.replace(/__hash__/ig, this.hash)
-			.replace(/__filename__/ig, this.fileName)
-			.replace(/__statements__/ig, JSON.stringify(this.statements))
-			.replace(/__branches__/ig, JSON.stringify(this.branches));
+			.replace(/__projectHash__/g, this.project.hash)
+			.replace(/__fileHash__/g, this.hash)
+			.replace(/__filename__/g, this.fileName)
+			.replace(/__statements__/g, JSON.stringify(this.statements))
+			.replace(/__branches__/g, JSON.stringify(this.branches))
+			.replace(/__sourceCode__/g, JSON.stringify(this.source.getFullText()));
 
 		this.instrumentedSource = header + this.instrumentedSource;
+
+		// fs.writeFileSync(this.fileName + '.covered', this.instrumentedSource);
 	}
 
 	/**

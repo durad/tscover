@@ -114,7 +114,8 @@ let __fileHash__: any = (Function('return this'))();
 				branchCoverage: fileBranchCoverage,
 				lines: lines,
 				statements: fileData.s,
-				branches: fileData.b
+				branches: fileData.b,
+				sourceCode: fileData.sourceCode
 			});
 
 			result.totalStatCount += fileStatCount;
@@ -135,8 +136,8 @@ let __fileHash__: any = (Function('return this'))();
 	}
 
 	if (!tscover.generateLcov) tscover.generateLcov = function(pathRemap) {
-		let p = [];
 		let coverage = tscover.generateCoverage();
+		let p = [];
 
 		for (let file of coverage.files) {
 			let outPath = file.filePath;
@@ -167,50 +168,6 @@ let __fileHash__: any = (Function('return this'))();
 		return p.join('\n');
 	}
 
-	if (!tscover.generateLcovOld) tscover.generateLcovOld = function(pathRemap) {
-		let p = [];
-		for (let f in coverageData) {
-			if (pathRemap) f = f.replace(pathRemap.from, pathRemap.to);
-
-			p.push('TN:');
-			p.push('SF:' + f);
-			p.push('FNF:0');
-			p.push('FNH:0');
-
-			let q = coverageData[f];
-			let h = 0;
-			let m: any = {};
-
-			for (let li = 0; li < q.s.length; li++) {
-				m[q.s[li].l] = m[q.s[li].l] || 0
-				m[q.s[li].l] += q.s[li].c;
-			}
-
-			for (let k in m) {
-				p.push('DA:' + (parseInt(k) + 1) + ',' + m[k]);
-				if (m[k] > 0) h++;
-			}
-
-			p.push('LF:' + q.s.length);
-			p.push('LH:' + h);
-
-			h = 0;
-			q.b.sort(function(a, b) { return a.l - b.l; });
-
-			for (let bi = 0; bi < q.b.length; bi++) {
-				p.push('BRDA:' + (q.b[bi].l + 1) + ',' + (bi + 1) + ',0,' + q.b[bi].c[0]);
-				p.push('BRDA:' + (q.b[bi].l + 1) + ',' + (bi + 1) + ',1,' + q.b[bi].c[1]);
-				if (q.b[bi].c[0] > 0 || q.b[bi].c[1] > 0) h++
-			}
-
-			p.push('BRF:' + q.b.length);
-			p.push('BRH:' + h);
-			p.push('end_of_record');
-		}
-
-		return p.join('\n');
-	}
-
 	if (!tscover.saveLcov) tscover.saveLcov = function(lcovPath = '.', pathRemap: any) {
 		lcovPath = path.join(lcovPath, 'coverage');
 		if (!fs.existsSync(lcovPath)) fs.mkdirSync(lcovPath);
@@ -220,7 +177,9 @@ let __fileHash__: any = (Function('return this'))();
 	}
 
 	if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.', pathRemap: any) {
+		let coverage = tscover.generateCoverage();
 		let report = [];
+
 		report.push('<html>');
 		report.push('<head>');
 		report.push('<style>');
@@ -250,19 +209,6 @@ let __fileHash__: any = (Function('return this'))();
 			.filename${projectHash} {
 				padding: 10px 0px;
 				font-familly: Verdana;
-			}
-
-			.line${projectHash} {
-				display: inline-block;
-				width: 100%;
-			}
-
-			.line${projectHash}.covered${projectHash} {
-				background-color: #dfd;
-			}
-
-			.line${projectHash}.noncovered${projectHash} {
-				background-color: #fdd;
 			}
 
 			.filecontents${projectHash} {
@@ -308,11 +254,22 @@ let __fileHash__: any = (Function('return this'))();
 				right: 0px;
 				bottom: 0px;
 				margin: 0px;
+				tab-size: 4;
 			}
 
-			.source${projectHash} span {
+			.line${projectHash} {
+				display: inline-block;
+				width: 100%;
 				padding-left: 4px;
 				box-sizing: border-box;
+			}
+
+			.line${projectHash}.covered${projectHash} {
+				background-color: #dfd;
+			}
+
+			.line${projectHash}.noncovered${projectHash} {
+				background-color: #fdd;
 			}
 		`);
 
@@ -322,50 +279,63 @@ let __fileHash__: any = (Function('return this'))();
 
 		report.push(`<div class="viewer${projectHash}">`);
 		report.push(`<div class="filenames${projectHash}">`);
-		for (let f in coverageData) {
-			report.push(`<div class="filename${projectHash}" hash="${coverageData[f].hash}">${f}</div>`);
+
+		for (let file of coverage.files) {
+			report.push(`<div class="filename${projectHash}">${file.filePath}</div>`);
 		}
+
 		report.push('</div>');
 
 		report.push(`<div class="filecontents${projectHash}">`);
-		let fileIndex = 0;
-		for (let f in coverageData) {
-			let q = coverageData[f];
-			let h = 0;
-			let m: any = {};
 
-			for (let li = 0; li < q.s.length; li++) {
-				m[q.s[li].l] = m[q.s[li].l] || 0
-				m[q.s[li].l] += q.s[li].c;
-			}
-
-			let source = coverageData[f].sourceCode.replace(/\r/g, '');
-			let sourceLines = source.split('\n');
+		for (let file of coverage.files) {
 			let formattedSource = [];
 			let lineNumbers = [];
+
+			let linesMap = {};
+			for (let line of file.lines) {
+				linesMap[line.l] = line.c;
+			}
+
+			let source = file.sourceCode;
+			let inserts = [];
+
+			for (let branch of file.branches) {
+				if (branch.c[0] === 0) inserts.push({ pos: branch.s, content: '[B]' });
+				else if (branch.c[1] === 0) inserts.push({ pos: branch.s, content: '[B]' });
+			}
+
+			inserts.sort(function(a, b) { return a.pos - b.pos; });
+			let sourceParts = [];
+			let lastPartPos = 0;
+
+			for (let insert of inserts) {
+				sourceParts.push(source.substring(lastPartPos, insert.pos));
+				sourceParts.push(insert.content);
+				lastPartPos = insert.pos;
+			}
+
+			sourceParts.push(source.substring(lastPartPos));
+			source = sourceParts.join('');
+
+			source = source.replace(/\r/g, '');
+			let sourceLines = source.split('\n');
+
 			for (let li = 0; li < sourceLines.length; li++) {
 				lineNumbers.push(`<div class="linenumber${projectHash}">${li + 1}</div>`);
 
-				if (m[li] === 0) {
-					formattedSource.push(`<span class="line${projectHash} noncovered${projectHash}">${sourceLines[li]}</span>`);
-				} else if (m[li] > 0) {
-					formattedSource.push(`<span class="line${projectHash} covered${projectHash}">${sourceLines[li]}</span>`);
-				} else {
-					formattedSource.push(`<span class="line${projectHash}">${sourceLines[li]}</span>`);
-				}
+				let lineClass = linesMap[li] !== undefined ? (linesMap[li] === 0 ? `noncovered${projectHash}` : `covered${projectHash}`) : '';
+				formattedSource.push(`<span class="line${projectHash} ${lineClass}">${sourceLines[li]}</span>`);
 			}
 
-			report.push(`<div class="filecontent${projectHash} ${fileIndex === 0 ? 'active' : ''}" hash="${coverageData[f].hash}">`);
+			report.push(`<div class="filecontent${projectHash} ${file === coverage.files[0] ? 'active' : ''}" hash="${file.hash}">`);
 			report.push(`<div class="linenumbers${projectHash}">${lineNumbers.join('\n')}</div>`);
 			report.push(`<pre class="source${projectHash}">${formattedSource.join('\n')}</pre>`);
 			report.push(`</div>`);
-
-			fileIndex++;
 		}
-		report.push('</div>');
 
 		report.push('</div>');
-
+		report.push('</div>');
 		report.push('</body>');
 		report.push('</html>');
 

@@ -193,12 +193,14 @@ let __fileHash__: any = (Function('return this'))();
 				right: 0px;
 			}
 
-			.filenames${projectHash} {
+			.filelist${projectHash} {
 				position: absolute;
 				left: 0px;
 				top: 0px;
 				bottom: 0px;
 				width: 200px;
+				font-family: Arial, Helvetica, sans-serif;
+				font-size: 13px;
 				background-color: #eee;
 				border-right: 1px solid #ccc;
 				box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
@@ -206,9 +208,45 @@ let __fileHash__: any = (Function('return this'))();
 				z-index: 10;
 			}
 
-			.filename${projectHash} {
-				padding: 10px 0px;
-				font-familly: Verdana;
+			.filecontainer${projectHash} {
+				position: relative;
+			}
+
+			.filecontainer${projectHash}:hover {
+				background-color: #ddd;
+				cursor: pointer;
+			}
+
+			.filecontainer${projectHash}.active${projectHash} {
+				background-color: #6af;
+				color: #fff;
+			}
+
+			.filepath${projectHash} {
+				width: 150px;
+				padding: 4px 0px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				direction:rtl;
+				text-align:right;
+				unicode-bidi: plaintext;
+			}
+
+			.filestat${projectHash} {
+				position: absolute;
+				right: 3px;
+				top: 0px;
+				box-sizing: border-box;
+				padding: 4px 0px;
+			}
+
+			.filestat${projectHash}.green${projectHash} {
+				color: #082;
+			}
+
+			.filestat${projectHash}.red${projectHash} {
+				color: #802;
 			}
 
 			.filecontents${projectHash} {
@@ -225,7 +263,7 @@ let __fileHash__: any = (Function('return this'))();
 				font-size: 14px;
 			}
 
-			.filecontent${projectHash}.active {
+			.filecontent${projectHash}.active${projectHash} {
 				display: block;
 			}
 
@@ -278,10 +316,15 @@ let __fileHash__: any = (Function('return this'))();
 		report.push('<body>');
 
 		report.push(`<div class="viewer${projectHash}">`);
-		report.push(`<div class="filenames${projectHash}">`);
+		report.push(`<div class="filelist${projectHash}">`);
 
 		for (let file of coverage.files) {
-			report.push(`<div class="filename${projectHash}">${file.filePath}</div>`);
+			report.push(`<div class="filecontainer${projectHash} filecontainer${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}" onclick="selectFile('${file.hash}')">`);
+			report.push(`<div class="filepath${projectHash}">${file.filePath}</div>`);
+			let fileStat = `${Math.round(file.lineCoverage * 1000) / 10}%`;
+			let fileStatClass = file.lineCoverage === 1 ? 'green' : 'red';
+			report.push(`<div class="filestat${projectHash} ${fileStatClass}${projectHash}">${fileStat}</div>`);
+			report.push(`</div>`);
 		}
 
 		report.push('</div>');
@@ -328,7 +371,7 @@ let __fileHash__: any = (Function('return this'))();
 				formattedSource.push(`<span class="line${projectHash} ${lineClass}">${sourceLines[li]}</span>`);
 			}
 
-			report.push(`<div class="filecontent${projectHash} ${file === coverage.files[0] ? 'active' : ''}" hash="${file.hash}">`);
+			report.push(`<div class="filecontent${projectHash} filecontent${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}">`);
 			report.push(`<div class="linenumbers${projectHash}">${lineNumbers.join('\n')}</div>`);
 			report.push(`<pre class="source${projectHash}">${formattedSource.join('\n')}</pre>`);
 			report.push(`</div>`);
@@ -336,6 +379,27 @@ let __fileHash__: any = (Function('return this'))();
 
 		report.push('</div>');
 		report.push('</div>');
+
+		report.push('<script>');
+		report.push(`
+			function removeClass(e, cls) {
+				var reg = new RegExp('(\\\\s|^)'+cls+'(\\\\s|$)');
+				e.className = e.className.replace(reg,' ');
+			}
+
+			function addClass(e, cls) {
+				e.className = e.className + ' ' + cls;
+			}
+
+			function selectFile(fileHash) {
+				removeClass(document.querySelector('.filecontainer${projectHash}.active${projectHash}'), 'active${projectHash}');
+				removeClass(document.querySelector('.filecontent${projectHash}.active${projectHash}'), 'active${projectHash}');
+				addClass(document.querySelector('.filecontainer' + fileHash), 'active${projectHash}');
+				addClass(document.querySelector('.filecontent' + fileHash), 'active${projectHash}');
+			}
+		`);
+		report.push('</script>');
+
 		report.push('</body>');
 		report.push('</html>');
 

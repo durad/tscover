@@ -25,8 +25,7 @@ var SourceInstrumenter = (function () {
         this.branches = [];
         this.instrumentedSource = this.visitNode(this.source, { kind: null }, { kind: null }, 0, 0, false);
         // prepend header to instrumented source
-        var header = fs.readFileSync(path.join(__dirname, 'header.ts'), 'utf8')
-            .split('// ---split---')[1]
+        var header = fs.readFileSync(path.join(__dirname, 'header.tmpl'), 'utf8')
             .replace(/__projectHash__/g, this.project.hash)
             .replace(/__fileHash__/g, this.hash)
             .replace(/__filename__/g, this.fileName)
@@ -34,7 +33,7 @@ var SourceInstrumenter = (function () {
             .replace(/__branches__/g, JSON.stringify(this.branches))
             .replace(/__sourceCode__/g, JSON.stringify(this.source.getFullText()));
         this.instrumentedSource = header + this.instrumentedSource;
-        // fs.writeFileSync(this.fileName + '.covered', this.instrumentedSource);
+        fs.writeFileSync(this.fileName + '.inst', this.instrumentedSource);
     };
     /**
      * Called for every statement found in the source. Returns instrumentation statement prefix.

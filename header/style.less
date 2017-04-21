@@ -1,0 +1,125 @@
+
+.viewer__projectHash__ {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+}
+
+.filelist__projectHash__ {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	width: 200px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	background-color: #eee;
+	border-right: 1px solid #ccc;
+	box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+	overflow: hidden;
+	z-index: 10;
+}
+
+.filecontainer__projectHash__ {
+	position: relative;
+}
+
+.filecontainer__projectHash__:hover {
+	background-color: #ddd;
+	cursor: pointer;
+}
+
+.filecontainer__projectHash__.active__projectHash__ {
+	background-color: #6af;
+	color: #fff;
+}
+
+.filepath__projectHash__ {
+	width: 150px;
+	padding: 4px 0px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	direction:rtl;
+	text-align:right;
+	unicode-bidi: plaintext;
+}
+
+.filestat__projectHash__ {
+	position: absolute;
+	right: 3px;
+	top: 0px;
+	box-sizing: border-box;
+	padding: 4px 0px;
+}
+
+.filestat__projectHash__.green__projectHash__ {
+	color: #082;
+}
+
+.filestat__projectHash__.red__projectHash__ {
+	color: #802;
+}
+
+.filecontents__projectHash__ {
+}
+
+.filecontent__projectHash__ {
+	display: none;
+	position: absolute;
+	left: 200px;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+	font-family: 'Consolas', 'Courier New', monospace;
+	font-size: 14px;
+}
+
+.filecontent__projectHash__.active__projectHash__ {
+	display: block;
+}
+
+.linenumbers__projectHash__ {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	width: 40px;
+	margin: 0px;
+	background-color: #fff;
+	border-right: 2px solid #adf;
+	box-sizing: border-box;
+	margin: 0px;
+}
+
+.linenumber__projectHash__ {
+	text-align: right;
+	padding-right: 3px;
+}
+
+.source__projectHash__ {
+	position: absolute;
+	left: 40px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	margin: 0px;
+	tab-size: 4;
+}
+
+.line__projectHash__ {
+	display: inline-block;
+	width: 100%;
+	padding-left: 4px;
+	box-sizing: border-box;
+}
+
+.line__projectHash__.covered__projectHash__ {
+	background-color: #dfd;
+}
+
+.line__projectHash__.noncovered__projectHash__ {
+	background-color: #fdd;
+}

@@ -14,7 +14,10 @@
   },
   "types": "build/tscover.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prebuild": "rm -rf ./build",
+    "build": "./build.sh",
+    "dev_build": "./build.sh --debug --watch"
   },
   "repository": {
     "type": "git",

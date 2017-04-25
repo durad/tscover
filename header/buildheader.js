@@ -59,6 +59,10 @@ less.render(reportStyle, { plugins: plugins })
 		css = css.replace(/__projectHash__/g, '${projectHash}');
 		header = header.replace('__CSS__', css);
 		fs.writeFileSync(path.join(outDir, 'header.tmpl'), header, 'utf8');
+
+		if (process.argv.indexOf('--debug') !== -1) {
+			console.log('Compiled ' + path.join(outDir, 'header.tmpl'));
+		}
 	})
 	.catch(function(err) {
 		console.error('Error while processing style.less:');

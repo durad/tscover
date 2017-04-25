@@ -14,7 +14,10 @@
   },
   "types": "build/tscover.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prebuild": "rm -rf ./build",
+    "build": "./build.sh",
+    "dev_build": "./build.sh --debug --watch"
   },
   "repository": {
     "type": "git",
@@ -31,5 +34,10 @@
   "bugs": {
     "url": "https://github.com/durad/tscover/issues"
   },
-  "homepage": "https://github.com/durad/tscover#readme"
+  "homepage": "https://github.com/durad/tscover#readme",
+  "devDependencies": {
+    "less": "^2.7.2",
+    "less-plugin-clean-css": "^1.5.1",
+    "uglify-js": "git+https://github.com/mishoo/UglifyJS2.git#278577f3cb75e72320564805ee91be63e5f9c806"
+  }
 }

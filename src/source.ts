@@ -40,8 +40,7 @@ export class SourceInstrumenter {
 		this.instrumentedSource = this.visitNode(this.source, { kind: null }, { kind: null }, 0, 0, false);
 
 		// prepend header to instrumented source
-		let header = fs.readFileSync(path.join(__dirname, 'header.ts'), 'utf8')
-			.split('// ---split---')[1]
+		let header = fs.readFileSync(path.join(__dirname, 'header.tmpl'), 'utf8')
 			.replace(/__projectHash__/g, this.project.hash)
 			.replace(/__fileHash__/g, this.hash)
 			.replace(/__filename__/g, this.fileName)

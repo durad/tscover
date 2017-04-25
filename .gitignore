@@ -4,4 +4,4 @@ build/
 **/npm-debug.log
 *.js
 !bin/*.js
-!header/buildheader.js
+!header/*.js

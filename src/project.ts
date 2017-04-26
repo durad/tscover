@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vm from 'vm';
 import * as crypto from 'crypto';
-import * as typescript from 'typescript';
+// import * as typescript from 'typescript';
 import { Util } from './util';
 import { SourceInstrumenter } from './source';
 
@@ -16,7 +16,8 @@ export class ProjectInstrumenter {
 	 */
 	run() {
 		// capture installed TypesScript compiler and its createProgram func
-		let typescriptPath: string = require('requireg')('typescript');
+		let typescriptPath: string = require.resolve('typescript');
+		let typescript: any = require('typescript');
 		let typescriptRoot: string = path.dirname(typescriptPath);
 		let tscPath: string = path.join(typescriptRoot, 'tsc.js');
 		let tscCode: string = fs.readFileSync(tscPath, 'utf8');
@@ -29,8 +30,8 @@ export class ProjectInstrumenter {
 		this.sk = vm.runInThisContext('(function(typescript) { return typescript.SyntaxKind })')(typescript);
 
 		// hijack createProgram - main entry point into compilation process
-		ts.createProgram = (fileNames, compilerOptions, compilerHost): typescript.Program => {
-			let program: typescript.Program;
+		ts.createProgram = (fileNames, compilerOptions, compilerHost): any => {
+			let program: any;
 
 			// call createProgram() and emit() with empty writer to trigger parsing of source files
 			program = typescript.createProgram(fileNames, compilerOptions);
@@ -42,7 +43,7 @@ export class ProjectInstrumenter {
 			// getSourceFile gets syntax tree of the source file. We are hijacking this to insert instrumentaion logic
 			let getSourceFileOriginal = compilerHost.getSourceFile;
 			compilerHost.getSourceFile = (fileName, languageVersion, onError) => {
-				let result: typescript.SourceFile = getSourceFileOriginal.apply(compilerHost, [fileName, languageVersion, onError]);
+				let result: any = getSourceFileOriginal.apply(compilerHost, [fileName, languageVersion, onError]);
 				let source = sources.filter(s => s.fileName == fileName)[0];
 
 				if (fileName.match(/\.ts$/) && !fileName.match(/\.d\.ts$/) && source) {

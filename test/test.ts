@@ -1,6 +1,7 @@
 
 import * as path from 'path';
 import * as child_process from 'child_process';
+import * as assert from 'assert';
 
 
 async function exec(command: string, params: string[]) {
@@ -48,15 +49,29 @@ async function execSafe(command: string, params: string[]) {
 }
 
 async function coverProject(projectName: string) {
-	return await execSafe(`tscover`, [`-p`, `${path.resolve(projectName)}`]);
+	return await execSafe(`tscover`, [`-p`, `${path.join(__dirname, `test_projects`, projectName)}`]);
 }
 
 suite('tscover', function() {
 	this.timeout(10 * 1000);
 
-	test('should return -1 when not present', async () => {
-		let r = await coverProject('tssample1');
-		console.log(r);
+	// suiteSetup(async () => {
+	// 	await execSafe('rm', ['-rf', 'test_projects/*.js']);
+	// });
+
+	test('--help should output typescript help', async () => {
+		let r = await execSafe('tscover', ['--help']);
+
+		assert(/^Version/.test(r.stdout));
+		assert(/Syntax:\s*tsc \[options\] \[file ...\]/.test(r.stdout));
+	});
+
+	test('should cover project: project1_helloworld', async () => {
+		await coverProject('project1_helloworld');
+	});
+
+	test('should cover project: project2', async () => {
+		await coverProject('project2');
 	});
 
 	// test('should return -1 when not present', function() {

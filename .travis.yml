@@ -3,10 +3,10 @@ node_js:
   - 7
   - 6
 install:
-  - npm install -g typescript
-  - npm install -g mocha
+  - sudo npm install -g typescript
+  - sudo npm install -g mocha
   - npm install
-  - npm link
+  - sudo npm link
   - tsc --version
 script:
   - npm run build

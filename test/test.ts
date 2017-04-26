@@ -2,29 +2,61 @@
 import * as path from 'path';
 import * as child_process from 'child_process';
 
-async function delay() {
-	return new Promise(resolve => {
-		setTimeout(resolve, 100);
-	})
+
+async function exec(command: string, params: string[]) {
+	return new Promise((resolve, reject) => {
+		let proc = child_process.spawn(command, params);
+
+		let all = [];
+		let stdout = [];
+		let stderr = [];
+
+		proc.stdout.on('data', chunk => {
+			stdout.push(chunk.toString());
+			all.push(chunk.toString());
+		});
+
+		proc.stderr.on('data', chunk => {
+			stderr.push(chunk.toString());
+			all.push(chunk.toString());
+		});
+
+		proc.on('exit', (code: number, signal: string) => {
+			resolve({
+				code,
+				signal,
+				stdout: stdout.join(''),
+				stderr: stderr.join(''),
+				all: all.join('')
+			});
+		});
+	});
+}
+
+async function execSafe(command: string, params: string[]) {
+	let result: any = await exec(command, params);
+
+	if (result.code !== 0) {
+		throw new Error(`Command ${command} exited with code ${result.code}\n${result.all}`);
+	}
+
+	if (result.signal !== null) {
+		throw new Error(`Command ${command} exited with signal ${result.signal}\n${result.all}`);
+	}
+
+	return result;
 }
 
 async function coverProject(projectName: string) {
-	child_process.execSync(`tscover -p ${path.resolve(projectName)}`);
+	return await execSafe(`tscover`, [`-p`, `${path.resolve(projectName)}`]);
 }
 
 suite('tscover', function() {
 	this.timeout(10 * 1000);
 
-	// suiteSetup(function() {
-	// 	console.log('suiteSetup');
-	// });
-
-	// setup(function() {
-	// 	console.log('setup');
-	// });
-
-	test('should return -1 when not present', function() {
-		coverProject('tssample1');
+	test('should return -1 when not present', async () => {
+		let r = await coverProject('tssample1');
+		console.log(r);
 	});
 
 	// test('should return -1 when not present', function() {

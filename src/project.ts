@@ -17,12 +17,17 @@ export class ProjectInstrumenter {
 
 	run() {
 		// capture installed TypesScript compiler and its createProgram func
+console.log('__Before global-modules');
+let gm = require('global-modules');
+console.log(gm);
+console.log('__After global-modules');
+
+console.log('__Before resolve');
 		let typescriptPath: string = require.resolve('typescript');
+console.log('__After require');
 		let typescriptRoot: string = path.dirname(typescriptPath);
-console.log('__Before require');
 console.log(typescriptPath);
 		let typescript: any = require(typescriptPath);
-console.log('__After require');
 		let tscPath: string = path.join(typescriptRoot, 'tsc.js');
 		let tscCode: string = fs.readFileSync(tscPath, 'utf8');
 		tscCode = tscCode.replace(/ts.executeCommandLine\(ts\.sys\.args\)\;/, '// ts.executeCommandLine(ts.sys.args);');

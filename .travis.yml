@@ -10,6 +10,6 @@ install:
   - tsc --version
 script:
   - npm run build
-  - tsc --help
-  # - cat build/project.js
+  - tscover --help
+  - cat build/project.js
   # - npm test

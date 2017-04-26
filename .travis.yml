@@ -7,6 +7,8 @@ install:
   - npm install -g mocha
   - npm install
   - npm link
+  - tsc --version
+  - cat build/project.js
 script:
   - npm run build
   - npm test

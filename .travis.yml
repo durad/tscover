@@ -4,6 +4,8 @@ node_js:
   - 6
 install:
   - npm install -g typescript
+  - npm install -g mocha
   - npm install
 script:
   - npm build
+  - npm test

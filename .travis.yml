@@ -6,6 +6,7 @@ install:
   - npm install -g typescript
   - npm install -g mocha
   - npm install
+  - npm link
 script:
   - npm run build
   - npm test

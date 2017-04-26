@@ -14,10 +14,11 @@ export class ProjectInstrumenter {
 	/**
 	 * Main entry point into compilation process
 	 */
+
 	run() {
 		// capture installed TypesScript compiler and its createProgram func
 		let typescriptPath: string = require.resolve('typescript');
-		let typescript: any = require('typescript');
+		let typescript: any = require(typescriptPath);
 		let typescriptRoot: string = path.dirname(typescriptPath);
 		let tscPath: string = path.join(typescriptRoot, 'tsc.js');
 		let tscCode: string = fs.readFileSync(tscPath, 'utf8');

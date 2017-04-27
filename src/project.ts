@@ -14,21 +14,19 @@ export class ProjectInstrumenter {
 	/**
 	 * Main entry point into compilation process
 	 */
-
 	run() {
 		// capture installed TypesScript compiler and its createProgram func
-console.log('__Before global-modules');
-let gm = require('global-modules');
-console.log(gm);
-console.log('__After global-modules');
-
-console.log('__Before resolve');
-		let typescriptPath: string = require.resolve('typescript');
-console.log('__After require');
-		let typescriptRoot: string = path.dirname(typescriptPath);
-console.log(typescriptPath);
-		let typescript: any = require(typescriptPath);
-		let tscPath: string = path.join(typescriptRoot, 'tsc.js');
+		let globalModulesPath = require('global-modules');
+console.log('globalModulesPath   ', globalModulesPath);
+		let typescriptRoot: string = path.join(globalModulesPath, 'typescript');
+console.log('typescriptRoot      ', typescriptRoot);
+		let typescriptResolved: string = require.resolve(typescriptRoot);
+console.log('typescriptResolved  ', typescriptResolved);
+		let tscRoot: string = path.dirname(typescriptResolved);
+console.log('tscRoot             ', tscRoot);
+		let typescript: any = require(typescriptResolved);
+		let tscPath: string = path.join(tscRoot, 'tsc.js');
+console.log('tscPath             ', tscPath);
 		let tscCode: string = fs.readFileSync(tscPath, 'utf8');
 		tscCode = tscCode.replace(/ts.executeCommandLine\(ts\.sys\.args\)\;/, '// ts.executeCommandLine(ts.sys.args);');
 		tscCode = '(function(require, __filename) { ' + tscCode + ' ;return ts; })';

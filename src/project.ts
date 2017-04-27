@@ -3,9 +3,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vm from 'vm';
 import * as crypto from 'crypto';
-// import * as typescript from 'typescript';
+import * as typescript from 'typescript';
 import { Util } from './util';
 import { SourceInstrumenter } from './source';
+
 
 export class ProjectInstrumenter {
 	sk: any;
@@ -17,16 +18,11 @@ export class ProjectInstrumenter {
 	run() {
 		// capture installed TypesScript compiler and its createProgram func
 		let globalModulesPath = require('global-modules');
-console.log('globalModulesPath   ', globalModulesPath);
 		let typescriptRoot: string = path.join(globalModulesPath, 'typescript');
-console.log('typescriptRoot      ', typescriptRoot);
 		let typescriptResolved: string = require.resolve(typescriptRoot);
-console.log('typescriptResolved  ', typescriptResolved);
 		let tscRoot: string = path.dirname(typescriptResolved);
-console.log('tscRoot             ', tscRoot);
 		let typescript: any = require(typescriptResolved);
 		let tscPath: string = path.join(tscRoot, 'tsc.js');
-console.log('tscPath             ', tscPath);
 		let tscCode: string = fs.readFileSync(tscPath, 'utf8');
 		tscCode = tscCode.replace(/ts.executeCommandLine\(ts\.sys\.args\)\;/, '// ts.executeCommandLine(ts.sys.args);');
 		tscCode = '(function(require, __filename) { ' + tscCode + ' ;return ts; })';
@@ -37,8 +33,8 @@ console.log('tscPath             ', tscPath);
 		this.sk = vm.runInThisContext('(function(typescript) { return typescript.SyntaxKind })')(typescript);
 
 		// hijack createProgram - main entry point into compilation process
-		ts.createProgram = (fileNames, compilerOptions, compilerHost): any => {
-			let program: any;
+		ts.createProgram = (fileNames, compilerOptions, compilerHost): typescript.Program => {
+			let program: typescript.Program;
 
 			// call createProgram() and emit() with empty writer to trigger parsing of source files
 			program = typescript.createProgram(fileNames, compilerOptions);
@@ -50,7 +46,7 @@ console.log('tscPath             ', tscPath);
 			// getSourceFile gets syntax tree of the source file. We are hijacking this to insert instrumentaion logic
 			let getSourceFileOriginal = compilerHost.getSourceFile;
 			compilerHost.getSourceFile = (fileName, languageVersion, onError) => {
-				let result: any = getSourceFileOriginal.apply(compilerHost, [fileName, languageVersion, onError]);
+				let result: typescript.SourceFile = getSourceFileOriginal.apply(compilerHost, [fileName, languageVersion, onError]);
 				let source = sources.filter(s => s.fileName == fileName)[0];
 
 				if (fileName.match(/\.ts$/) && !fileName.match(/\.d\.ts$/) && source) {

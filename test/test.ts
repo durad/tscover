@@ -53,7 +53,7 @@ async function coverProject(projectName: string) {
 }
 
 suite('tscover', function() {
-	this.timeout(10 * 1000);
+	this.timeout(30 * 1000);
 
 	// suiteSetup(async () => {
 	// 	await execSafe('rm', ['-rf', 'test_projects/*.js']);

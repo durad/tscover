@@ -7,6 +7,7 @@ import * as typescript from 'typescript';
 import { Util } from './util';
 import { SourceInstrumenter } from './source';
 
+
 export class ProjectInstrumenter {
 	sk: any;
 	hash: string;
@@ -16,9 +17,12 @@ export class ProjectInstrumenter {
 	 */
 	run() {
 		// capture installed TypesScript compiler and its createProgram func
-		let typescriptPath: string = require.resolve('typescript');
-		let typescriptRoot: string = path.dirname(typescriptPath);
-		let tscPath: string = path.join(typescriptRoot, 'tsc.js');
+		let globalModulesPath = require('global-modules');
+		let typescriptRoot: string = path.join(globalModulesPath, 'typescript');
+		let typescriptResolved: string = require.resolve(typescriptRoot);
+		let tscRoot: string = path.dirname(typescriptResolved);
+		let typescript: any = require(typescriptResolved);
+		let tscPath: string = path.join(tscRoot, 'tsc.js');
 		let tscCode: string = fs.readFileSync(tscPath, 'utf8');
 		tscCode = tscCode.replace(/ts.executeCommandLine\(ts\.sys\.args\)\;/, '// ts.executeCommandLine(ts.sys.args);');
 		tscCode = '(function(require, __filename) { ' + tscCode + ' ;return ts; })';

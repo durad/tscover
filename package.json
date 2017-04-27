@@ -39,5 +39,8 @@
     "less": "^2.7.2",
     "less-plugin-clean-css": "^1.5.1",
     "uglify-js": "git+https://github.com/mishoo/UglifyJS2.git#278577f3cb75e72320564805ee91be63e5f9c806"
+  },
+  "dependencies": {
+    "global-modules": "^0.2.3"
   }
 }

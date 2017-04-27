@@ -1,12 +1,20 @@
 
 import * as path from 'path';
+import * as fs from 'fs';
 import * as child_process from 'child_process';
 import * as assert from 'assert';
 
 
-async function exec(command: string, params: string[]) {
+let tscoverPath = path.join(__dirname, './../bin/tscover.js');
+let projectsRoot = path.join(__dirname, 'test_projects');
+
+function projectFolder(projectName: string) {
+	return path.join(projectsRoot, projectName);
+}
+
+async function exec(command: string, options?: any) {
 	return new Promise((resolve, reject) => {
-		let proc = child_process.spawn(command, params);
+		let proc = child_process.exec(command, options);
 
 		let all = [];
 		let stdout = [];
@@ -34,8 +42,8 @@ async function exec(command: string, params: string[]) {
 	});
 }
 
-async function execSafe(command: string, params: string[]) {
-	let result: any = await exec(command, params);
+async function execSafe(command: string, options?: any) {
+	let result: any = await exec(command, options);
 
 	if (result.code !== 0) {
 		throw new Error(`Command ${command} exited with code ${result.code}\n${result.all}`);
@@ -48,59 +56,86 @@ async function execSafe(command: string, params: string[]) {
 	return result;
 }
 
+async function cover(fileName: string) {
+	let result = await execSafe(`${tscoverPath} ${fileName}`);
+
+	if (result.all !== '') {
+		throw new Error(`tscover output:\n${result.all}`);
+	}
+}
+
 async function coverProject(projectName: string) {
-	return await execSafe(`tscover`, [`-p`, `${path.join(__dirname, `test_projects`, projectName)}`]);
+	let result = await execSafe(`${tscoverPath} -p ${projectFolder(projectName)}`);
+
+	if (result.all !== '') {
+		throw new Error(`tscover output:\n${result.all}`);
+	}
 }
 
 suite('tscover', function() {
 	this.timeout(30 * 1000);
+	this.slow(8 * 1000);
 
-	// suiteSetup(async () => {
-	// 	await execSafe('rm', ['-rf', 'test_projects/*.js']);
-	// });
+	setup(async () => {
+		await execSafe(`find ${projectsRoot} -type f -name '*.js' -delete`);
+		await execSafe(`find ${projectsRoot} -type d -name 'coverage' | xargs rm -rf`);
+		await execSafe(`find ${projectsRoot} -type d -name 'built' | xargs rm -rf`);
+	});
 
 	test('--help should output typescript help', async () => {
-		let r = await execSafe('tscover', ['--help']);
+		await execSafe(`find ${projectFolder('project1_helloworld')} -type f -name '*.js' -delete`);
+
+		let r = await execSafe(`${tscoverPath} --help`);
 
 		assert(/^Version/.test(r.stdout));
 		assert(/Syntax:\s*tsc \[options\] \[file ...\]/.test(r.stdout));
 	});
 
-	test('should cover project: project1_helloworld', async () => {
+	test('should cover individual files: project1_helloworld/helloworld.ts', async () => {
+		await cover(path.join(projectsRoot, 'project1_helloworld/helloworld.ts'));
+
+		let js = fs.readFileSync(path.join(projectFolder('project1_helloworld'), 'helloworld.js'), 'utf8');
+		assert(/tscover/.test(js));
+		assert(js.length > 1000);
+	});
+
+	test('should individual projects: project1_helloworld', async () => {
 		await coverProject('project1_helloworld');
+
+		let js = fs.readFileSync(path.join(projectFolder('project1_helloworld'), 'helloworld.js'), 'utf8');
+		assert(/tscover/.test(js));
+		assert(js.length > 1000);
 	});
 
-	test('should cover project: project2', async () => {
-		await coverProject('project2');
-	});
+	test('should output coverage when run with --autosavecover', async () => {
+		await coverProject('project1_helloworld');
+		await execSafe(`node ${path.join(projectFolder('project1_helloworld'), 'helloworld.js')} --autosavecover`,
+			{ cwd: projectFolder('project1_helloworld') });
 
-	// test('should return -1 when not present', function() {
-	// 	console.log('test2');
-	// });
+		let lcovStr = fs.readFileSync(path.join(projectFolder('project1_helloworld/coverage'), 'lcov.info'), 'utf8');
+		let coverStr = fs.readFileSync(path.join(projectFolder('project1_helloworld/coverage'), 'coverage.json'), 'utf8');
+		let cover = JSON.parse(coverStr);
+
+		assert(cover.totalLineCount === 1);
+		assert(cover.totalLineCovered === 1);
+		assert(cover.totalLineCoverage === 1);
+		assert(cover.totalStatCount === 1);
+		assert(cover.totalStatCovered === 1);
+		assert(cover.totalStatCoverage === 1);
+		assert(cover.files.length === 1);
+		assert(cover.files[0].statementsCount === 1);
+		assert(cover.files[0].statementsCovered === 1);
+		assert(cover.files[0].statementsCoverage === 1);
+	});
 
 	// suite('subsuite...', function() {
-
-	// 	test('should return -1 when not present', function() {
-	// 		console.log('test11');
-	// 	});
-
-	// 	test('should return -1 when not present', function() {
-	// 		console.log('test22');
-	// 	});
-
-	// 	test('', async () => {
-	// 		for (let i = 0; i < 10; i++) {
-	// 			await delay();
-	// 			console.log(i);
-	// 		}
+	// 	test('should...', function() {
 	// 	});
 	// })
 
 	// teardown(function() {
-	// 	console.log('teardown');
 	// });
 
 	// suiteTeardown(function() {
-	// 	console.log('suiteTeardown');
 	// });
 });

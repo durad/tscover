@@ -5,3 +5,4 @@ build/
 *.js
 !bin/*.js
 !header/*.js
+**/coverage

@@ -57,7 +57,7 @@ less.render(reportStyle, { plugins: plugins })
 	.then(function(result){
 		var css = result.css;
 		css = css.replace(/__projectHash__/g, '${projectHash}');
-		header = header.replace('__CSS__', css);
+		header = header.replace('__REPORTCSS__', css);
 		fs.writeFileSync(path.join(outDir, 'header.tmpl'), header, 'utf8');
 
 		if (process.argv.indexOf('--debug') !== -1) {

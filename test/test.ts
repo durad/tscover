@@ -128,6 +128,38 @@ suite('tscover', function() {
 		assert(cover.files[0].statementsCoverage === 1);
 	});
 
+	test('should output correct coverage', async () => {
+		await coverProject('project2_fizzbuzz');
+
+		async function runFizzBuzz(max: number): Promise<any> {
+			await execSafe(`node ${path.join(projectFolder('project2_fizzbuzz'), 'fizzbuzz.js')} --max ${max} --autosavecover`,
+				{ cwd: projectFolder('project2_fizzbuzz') });
+			let coverStr = fs.readFileSync(path.join(projectFolder('project2_fizzbuzz/coverage'), 'coverage.json'), 'utf8');
+			let cover = JSON.parse(coverStr);
+
+			return cover;
+		}
+
+		let cover1 = await runFizzBuzz(1);
+		let cover3 = await runFizzBuzz(3);
+		let cover5 = await runFizzBuzz(5);
+		let cover15 = await runFizzBuzz(15);
+		let cover100 = await runFizzBuzz(100);
+
+		assert(cover1.totalStatCovered < cover3.totalStatCovered);
+		assert(cover3.totalStatCovered < cover5.totalStatCovered);
+		assert(cover5.totalStatCovered < cover15.totalStatCovered);
+		assert(cover15.totalStatCovered === cover100.totalStatCovered);
+
+		assert(cover1.totalLineCovered < cover3.totalLineCovered);
+		assert(cover3.totalLineCovered < cover5.totalLineCovered);
+		assert(cover5.totalLineCovered < cover15.totalLineCovered);
+		assert(cover15.totalLineCovered === cover100.totalLineCovered);
+
+		assert(cover15.totalStatCoverage === 1);
+		assert(cover15.totalLineCoverage === 1);
+	});
+
 	// suite('subsuite...', function() {
 	// 	test('should...', function() {
 	// 	});

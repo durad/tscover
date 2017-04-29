@@ -128,7 +128,7 @@ suite('tscover', function() {
 		assert(cover.files[0].statementsCoverage === 1);
 	});
 
-	test('should output correct coverage', async () => {
+	test.only('should output correct coverage', async () => {
 		await coverProject('project2_fizzbuzz');
 
 		async function runFizzBuzz(max: number): Promise<any> {
@@ -156,8 +156,14 @@ suite('tscover', function() {
 		assert(cover5.totalLineCovered < cover15.totalLineCovered);
 		assert(cover15.totalLineCovered === cover100.totalLineCovered);
 
+		assert(cover1.totalBranchCovered < cover3.totalBranchCovered);
+		assert(cover3.totalBranchCovered < cover5.totalBranchCovered);
+		assert(cover5.totalBranchCovered < cover15.totalBranchCovered);
+		assert(cover15.totalBranchCovered === cover100.totalBranchCovered);
+
 		assert(cover15.totalStatCoverage === 1);
 		assert(cover15.totalLineCoverage === 1);
+		assert(cover15.totalBranchCoverage === 1);
 	});
 
 	// suite('subsuite...', function() {

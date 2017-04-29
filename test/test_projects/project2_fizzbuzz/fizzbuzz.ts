@@ -1,9 +1,7 @@
 
 let max = 100;
 let maxIndex = process.argv.indexOf('--max');
-if (maxIndex >=0 && process.argv.length > maxIndex + 1) {
-	max = parseInt(process.argv[maxIndex + 1]) || max;
-}
+max = parseInt(process.argv[maxIndex + 1]) || max;
 
 for (let i = 1; i <= max; i++) {
 	if (i % 15 === 0) {

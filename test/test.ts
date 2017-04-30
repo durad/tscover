@@ -128,7 +128,7 @@ suite('tscover', function() {
 		assert(cover.files[0].statementsCoverage === 1);
 	});
 
-	test.only('should output correct coverage', async () => {
+	test('should output correct coverage', async () => {
 		await coverProject('project2_fizzbuzz');
 
 		async function runFizzBuzz(max: number): Promise<any> {
@@ -164,6 +164,19 @@ suite('tscover', function() {
 		assert(cover15.totalStatCoverage === 1);
 		assert(cover15.totalLineCoverage === 1);
 		assert(cover15.totalBranchCoverage === 1);
+	});
+
+	test('should work with all keywords', async () => {
+		await coverProject('project3_keywords');
+
+		await execSafe(`node ${path.join(projectFolder('project3_keywords'), 'keywords.js')} --autosavecover`,
+			{ cwd: projectFolder('project3_keywords') });
+		let coverStr = fs.readFileSync(path.join(projectFolder('project3_keywords/coverage'), 'coverage.json'), 'utf8');
+		let cover = JSON.parse(coverStr);
+
+		assert(cover.totalLineCoverage === 1);
+		assert(cover.totalStatCoverage === 1);
+		assert(cover.totalBranchCoverage === 1);
 	});
 
 	// suite('subsuite...', function() {

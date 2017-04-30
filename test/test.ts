@@ -179,6 +179,18 @@ suite('tscover', function() {
 		assert(cover.totalBranchCoverage === 1);
 	});
 
+	test('should work with nested functions', async () => {
+		await coverProject('project4_nested');
+
+		await execSafe(`node ${path.join(projectFolder('project4_nested'), 'nested.js')} --autosavecover`,
+			{ cwd: projectFolder('project4_nested') });
+		let coverStr = fs.readFileSync(path.join(projectFolder('project4_nested/coverage'), 'coverage.json'), 'utf8');
+		let cover = JSON.parse(coverStr);
+
+		assert(cover.totalLineCoverage === 1);
+		assert(cover.totalStatCoverage === 1);
+	});
+
 	// suite('subsuite...', function() {
 	// 	test('should...', function() {
 	// 	});

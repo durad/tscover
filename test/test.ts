@@ -64,8 +64,8 @@ async function cover(fileName: string) {
 	}
 }
 
-async function coverProject(projectName: string) {
-	let result = await execSafe(`${tscoverPath} -p ${projectFolder(projectName)}`);
+async function coverProject(projectName: string, params: string = '') {
+	let result = await execSafe(`${tscoverPath} -p ${projectFolder(projectName)} ${params}`);
 
 	if (result.all !== '') {
 		throw new Error(`tscover output:\n${result.all}`);
@@ -189,6 +189,32 @@ suite('tscover', function() {
 
 		assert(cover.totalLineCoverage === 1);
 		assert(cover.totalStatCoverage === 1);
+	});
+
+	test('should cover multiple files', async () => {
+		await coverProject('project5_multifiles');
+
+		async function runMultifiles(param: string): Promise<any> {
+			await execSafe(`node ${path.join(projectFolder('project5_multifiles'), 'main.js')} --autosavecover ${param}`,
+				{ cwd: projectFolder('project5_multifiles') });
+			let coverStr = fs.readFileSync(path.join(projectFolder('project5_multifiles/coverage'), 'coverage.json'), 'utf8');
+			let cover = JSON.parse(coverStr);
+
+			return cover;
+		}
+
+		let cov = await runMultifiles('');
+		let acov = await runMultifiles('-a');
+		let bcov = await runMultifiles('-b');
+		let ccov = await runMultifiles('-c');
+
+		assert(cov.totalStatCount < ccov.totalStatCount);
+		assert(ccov.totalStatCount < bcov.totalStatCount);
+		assert(bcov.totalStatCount < acov.totalStatCount);
+
+		assert(cov.files.length < ccov.files.length);
+		assert(ccov.files.length < bcov.files.length);
+		assert(bcov.files.length < acov.files.length);
 	});
 
 	// suite('subsuite...', function() {

@@ -15,7 +15,8 @@
 	width: 200px;
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 13px;
-	background-color: #eee;
+	background-color: #f6f3ec;
+	// background-color: #fcfbf7;
 	border-right: 1px solid #ccc;
 	box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
 	overflow: hidden;
@@ -32,8 +33,9 @@
 }
 
 .filecontainer__projectHash__.active__projectHash__ {
-	background-color: #6af;
-	color: #fff;
+	// background-color: #6af;
+	background-color: #bac8d0;
+	// color: #fff;
 }
 
 .filepath__projectHash__ {
@@ -63,9 +65,6 @@
 	color: #802;
 }
 
-.filecontents__projectHash__ {
-}
-
 .filecontent__projectHash__ {
 	display: none;
 	position: absolute;
@@ -79,6 +78,8 @@
 
 .filecontent__projectHash__.active__projectHash__ {
 	display: block;
+	background-color: darken(#fcfbf7, 0%);
+	// background-color: #f6f3ec;
 }
 
 .linenumbers__projectHash__ {
@@ -88,8 +89,7 @@
 	bottom: 0px;
 	width: 40px;
 	margin: 0px;
-	background-color: #fff;
-	border-right: 2px solid #adf;
+	border-right: 1px solid #cccbc7;
 	box-sizing: border-box;
 	margin: 0px;
 }
@@ -97,6 +97,7 @@
 .linenumber__projectHash__ {
 	text-align: right;
 	padding-right: 3px;
+	color: #678;
 }
 
 .source__projectHash__ {
@@ -111,15 +112,35 @@
 
 .line__projectHash__ {
 	display: inline-block;
+	position: relative;
 	width: 100%;
 	padding-left: 4px;
 	box-sizing: border-box;
 }
 
-.line__projectHash__.covered__projectHash__ {
-	background-color: #dfd;
+.warrning__projectHash__ {
+	padding: 0px 5px;
+	margin: 0px 2px;
+	font-size: 12px;
+	background-color: #fdfeea;
+	border-radius: 2px;
+	border: 1px solid #333;
 }
 
-.line__projectHash__.noncovered__projectHash__ {
-	background-color: #fdd;
+.count__projectHash__ {
+	position: absolute;
+	right: 5px;
+	color: #bfc2ab;
+}
+
+.covered__projectHash__ {
+	background-color: saturate(lighten(#dbdfca, 0%), 3%);
+}
+
+.noncovered__projectHash__ {
+	background-color: saturate( lighten(#d5bbb7, 5%), 15%);
+
+	.count__projectHash__ {
+		color: #802;
+	}
 }

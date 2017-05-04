@@ -219,8 +219,8 @@ let __fileHash__: any = (Function('return this'))();
 			let inserts = [];
 
 			for (let branch of file.branches) {
-				if (branch.c[0] === 0) inserts.push({ pos: branch.s, content: '[B]' });
-				else if (branch.c[1] === 0) inserts.push({ pos: branch.s, content: '[B]' });
+				if (branch.c[0] === 0) inserts.push({ pos: branch.s, ifType: true });
+				else if (branch.c[1] === 0) inserts.push({ pos: branch.s, ifType: false });
 			}
 
 			inserts.sort(function(a, b) { return a.pos - b.pos; });
@@ -229,7 +229,13 @@ let __fileHash__: any = (Function('return this'))();
 
 			for (let insert of inserts) {
 				sourceParts.push(source.substring(lastPartPos, insert.pos));
-				sourceParts.push(insert.content);
+
+				if (insert.ifType) {
+					sourceParts.push(`<span class="warrning${projectHash} warrningif${projectHash}" title="If path not taken.">I</span>`);
+				} else {
+					sourceParts.push(`<span class="warrning${projectHash} warrningelse${projectHash}" title="Else path not taken.">E</span>`);
+				}
+
 				lastPartPos = insert.pos;
 			}
 
@@ -240,10 +246,18 @@ let __fileHash__: any = (Function('return this'))();
 			let sourceLines = source.split('\n');
 
 			for (let li = 0; li < sourceLines.length; li++) {
-				lineNumbers.push(`<div class="linenumber${projectHash}">${li + 1}</div>`);
-
 				let lineClass = linesMap[li] !== undefined ? (linesMap[li] === 0 ? `noncovered${projectHash}` : `covered${projectHash}`) : '';
-				formattedSource.push(`<span class="line${projectHash} ${lineClass}">${sourceLines[li]}</span>`);
+				let countElem = '';
+				if (linesMap[li] !== undefined) {
+					if (linesMap[li] > 0) {
+						countElem = `<span class="covercount${projectHash}">x<span class="count${projectHash}">${linesMap[li]}</span></span>`;
+					} else {
+						countElem = `<span class="covercount${projectHash}"><span class="count${projectHash}">&#33;</span></span>`;
+					}
+				}
+
+				lineNumbers.push(`<div class="linenumber${projectHash} ${lineClass}">${li + 1}</div>`);
+				formattedSource.push(`<span class="line${projectHash} ${lineClass}">${sourceLines[li]}${countElem}</span>`);
 			}
 
 			report.push(`<div class="filecontent${projectHash} filecontent${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}">`);

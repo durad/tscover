@@ -184,7 +184,7 @@ let __fileHash__: any = (Function('return this'))();
 		report.push('<head>');
 		report.push('<style>');
 
-		report.push(`__REPORTSTYLE__`);
+		report.push(`__REPORTCSS__`);
 
 		report.push('</style>');
 		report.push('</head>');

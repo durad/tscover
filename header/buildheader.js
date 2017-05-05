@@ -21,16 +21,19 @@ header = header.replace(/\: any/g, '');
 var reportJs = fs.readFileSync(path.join(__dirname, 'reportscript.js'), 'utf8');
 
 if (!debug) {
-	header = UglifyJS.minify(header, {
-		fromString: true,
-		compress: {
-			properties: false,
-			pure_getters: false
-		},
-		mangle: {
-			toplevel: true
-		}
-	}).code;
+	// header = UglifyJS.minify(header, {
+	// 	fromString: true,
+	// 	compress: {
+	// 		properties: false,
+	// 		pure_getters: false
+	// 	},
+	// 	mangle: {
+	// 		toplevel: true
+	// 	}
+	// }).code;
+	header = header.split('\n')
+		.map(function(l) { return l.replace(/^\s*/, '').replace(/\s*$/, '') })
+		.join('');
 
 	reportJs = UglifyJS.minify(reportJs, {
 		fromString: true,

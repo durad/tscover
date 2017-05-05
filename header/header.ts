@@ -51,7 +51,7 @@ let __fileHash__: any = (Function('return this'))();
 			totalBranchCount: 0,
 			totalBranchCovered: 0,
 			totalBranchCoverage: 0,
-			files: []
+			files: <any[]>[]
 		};
 
 		for (let filePath in coverageData) {
@@ -61,7 +61,7 @@ let __fileHash__: any = (Function('return this'))();
 			let fileStatCount = 0;
 			let fileStatCovered = 0;
 			let fileStatCoverage = 0;
-			let linesMap = {};
+			let linesMap: { [index: string]: { l: number, c: number } } = {};
 			let lines = [];
 
 			for (let statement of fileData.s) {
@@ -126,7 +126,7 @@ let __fileHash__: any = (Function('return this'))();
 			result.totalBranchCovered += fileBranchCovered;
 		}
 
-		result.files.sort(function(a, b) { return (a.filePath == b.filePath) ? 0 : (a.filePath > b.filePath ? 1 : -1); })
+		result.files.sort(function(a: { filePath: string }, b: { filePath: string }) { return (a.filePath == b.filePath) ? 0 : (a.filePath > b.filePath ? 1 : -1); })
 
 		if (result.totalStatCount !== 0) result.totalStatCoverage = result.totalStatCovered / result.totalStatCount;
 		if (result.totalBranchCount !== 0) result.totalBranchCoverage = result.totalBranchCovered / result.totalBranchCount;
@@ -135,7 +135,7 @@ let __fileHash__: any = (Function('return this'))();
 		return result;
 	}
 
-	if (!tscover.generateLcov) tscover.generateLcov = function(pathRemap) {
+	if (!tscover.generateLcov) tscover.generateLcov = function(pathRemap: { from: string, to: string }) {
 		let coverage = tscover.generateCoverage();
 		let p = [];
 
@@ -168,7 +168,7 @@ let __fileHash__: any = (Function('return this'))();
 		return p.join('\n');
 	}
 
-	if (!tscover.saveLcov) tscover.saveLcov = function(lcovPath = '.', pathRemap: any) {
+	if (!tscover.saveLcov) tscover.saveLcov = function(lcovPath = '.', pathRemap: { from: string, to: string }) {
 		lcovPath = path.join(lcovPath, 'coverage');
 		if (!fs.existsSync(lcovPath)) fs.mkdirSync(lcovPath);
 
@@ -176,7 +176,7 @@ let __fileHash__: any = (Function('return this'))();
 		fs.writeFileSync(path.join(lcovPath, 'lcov.info'), lcov, 'utf8');
 	}
 
-	if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.', pathRemap: any) {
+	if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.', pathRemap: { from: string, to: string }) {
 		let coverage = tscover.generateCoverage();
 		let report = [];
 
@@ -210,7 +210,7 @@ let __fileHash__: any = (Function('return this'))();
 			let formattedSource = [];
 			let lineNumbers = [];
 
-			let linesMap = {};
+			let linesMap: { [index: string]: number } = {};
 			for (let line of file.lines) {
 				linesMap[line.l] = line.c;
 			}
@@ -279,7 +279,7 @@ let __fileHash__: any = (Function('return this'))();
 		return report.join('\n');
 	}
 
-	if (!tscover.saveReport) tscover.saveReport = function(reportPath = '.', pathRemap: any) {
+	if (!tscover.saveReport) tscover.saveReport = function(reportPath = '.', pathRemap: { from: string, to: string }) {
 		reportPath = path.join(reportPath, 'coverage');
 		if (!fs.existsSync(reportPath)) fs.mkdirSync(reportPath);
 

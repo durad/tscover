@@ -31,6 +31,22 @@ export class SourceInstrumenter {
 	}
 
 	/**
+	 * Searches for a first occurance of term and replaces it with a given string
+	 * @param original String to search term in
+	 * @param term Term String that is being searched
+	 * @param replacement Replacement term
+	 */
+	replace(original: string, term: string, replacement: string) {
+		let index = original.indexOf(term);
+		
+		if (index < 0) {
+			return original;
+		} else {
+			return original.substr(0, index) + replacement + original.substr(index + term.length);
+		}
+	}
+
+	/**
 	 * Recoursively visits all node of a gived source node and produce instrumented version.
 	 */
 	visit() {
@@ -44,13 +60,22 @@ export class SourceInstrumenter {
 			.replace(/__projectHash__/g, this.project.hash)
 			.replace(/__fileHash__/g, this.hash)
 			.replace(/__filename__/g, this.fileName)
-			.replace(/__statements__/g, JSON.stringify(this.statements))
-			.replace(/__branches__/g, JSON.stringify(this.branches))
-			.replace(/__sourceCode__/g, JSON.stringify(this.source.getFullText()));
 
-		this.instrumentedSource = header + this.instrumentedSource;
+		header = this.replace(header, '__statements__', JSON.stringify(this.statements));
+		header = this.replace(header, '__branches__', JSON.stringify(this.branches));
+		header = this.replace(header, '__sourceCode__', JSON.stringify(this.source.getFullText()));
 
-		// fs.writeFileSync(this.fileName + '.covered', this.instrumentedSource);
+		let instrumentedLines = this.instrumentedSource.split('\n');
+		if (instrumentedLines.length > 0 && instrumentedLines[0].indexOf('#!') === 0) {
+			this.instrumentedSource = [instrumentedLines[0]]
+				.concat([header])
+				.concat(instrumentedLines.slice(1))
+				.join('\n');
+		} else {
+			this.instrumentedSource = header + this.instrumentedSource;
+		}
+
+		fs.writeFileSync(this.fileName + '.covered', this.instrumentedSource);
 	}
 
 	/**
@@ -96,15 +121,23 @@ export class SourceInstrumenter {
 		index: number,
 		prefixed: boolean): string
 	{
-		if (!node) return '';
+		if (!node || node.kind === this.sk.FirstJSDocTagNode) {
+			return '';
+		}
 
 		let children = node.getChildren();
 		let nodeText = node.getFullText();
+
+		if (children.length === 0 ||
+			node.kind === this.sk.PropertySignature ||
+			node.kind === this.sk.FirstJSDocTagNode
+		) {
+			return nodeText;
+		}
+
 		let trivia = node.getFullText().substring(0, node.getLeadingTriviaWidth());
 		let nodePrefix = '';
 		let childVisit = '';
-
-		if (children.length === 0) return nodeText;
 
 		// if super() is a first child do not prefix it
 		let isFirstSuper = false;

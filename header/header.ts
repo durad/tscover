@@ -3,14 +3,12 @@ let __branches__ = null;
 let __sourceCode__ = null;
 // ---split---
 let __fileHash__: any = (Function('return this'))();
-
 {
 	let global = __fileHash__;
 	global.__tscover__ = global.__tscover__ || { hash: '__projectHash__', data: {} };
 	let projectHash = '__projectHash__';
 	let tscover = global.__tscover__;
-	let coverageData = tscover.data;
-	coverageData['__filename__'] = coverageData['__filename__'] || {
+	tscover.data['__filename__'] = tscover.data['__filename__'] || {
 		s: __statements__,
 		b: __branches__,
 		hash: '__fileHash__',
@@ -22,10 +20,11 @@ let __fileHash__: any = (Function('return this'))();
 	let path = (typeof r === 'function') ? r('path') : null;
 
 	let process = global.process || null;
-	if (process && process.argv && process.argv.indexOf('--autosavecover') >= 0 && !tscover.scheduleLcovSave) {
+	let autosave = process && ((process.argv && process.argv.indexOf('--autosavecover') >= 0) || process.env.AUTOSAVECOVER);
+	if (autosave && !tscover.scheduleLcovSave) {
 		tscover.scheduleLcovSave = true;
 		let argIndex = process.argv.indexOf('--autosavecover');
-		process.argv.splice(argIndex, 1);
+		if (argIndex >= 0) process.argv.splice(argIndex, 1);
 
 		for (let e of ['beforeExit', 'exit', 'SIGINT', 'SIGTERM']) {
 			process.on(e, () => {
@@ -54,8 +53,8 @@ let __fileHash__: any = (Function('return this'))();
 			files: <any[]>[]
 		};
 
-		for (let filePath in coverageData) {
-			let fileData = coverageData[filePath];
+		for (let filePath in tscover.data) {
+			let fileData = tscover.data[filePath];
 
 			// statements
 			let fileStatCount = 0;
@@ -257,7 +256,11 @@ let __fileHash__: any = (Function('return this'))();
 				}
 
 				lineNumbers.push(`<div class="linenumber${projectHash} ${lineClass}">${li + 1}</div>`);
-				formattedSource.push(`<span class="line${projectHash} ${lineClass}">${sourceLines[li]}${countElem}</span>`);
+
+				let line = sourceLines[li].replace(/&/g, '&amp;');
+				line = line.replace(/</g, '&lt;');
+				line = line.replace(/>/g, '&gt;');
+				formattedSource.push(`<span class="line${projectHash} ${lineClass}">${line}${countElem}</span>`);
 			}
 
 			report.push(`<div class="filecontent${projectHash} filecontent${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}">`);

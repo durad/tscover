@@ -75,7 +75,7 @@ export class SourceInstrumenter {
 			this.instrumentedSource = header + this.instrumentedSource;
 		}
 
-		fs.writeFileSync(this.fileName + '.covered', this.instrumentedSource);
+		// fs.writeFileSync(this.fileName + '.covered', this.instrumentedSource);
 	}
 
 	/**

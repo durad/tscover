@@ -44,7 +44,7 @@ let animal: e = e.cats;
 
 // in
 for (let k in o) {
-	console.log(typeof o[k], k, o[k]);
+	console.log(typeof (<any>o)[k], k, (<any>o)[k]);
 }
 
 // for

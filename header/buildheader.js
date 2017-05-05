@@ -13,26 +13,14 @@ if (outDirIndex !== -1 && process.argv.length >= outDirIndex + 1) {
 	outDir = path.resolve(process.argv[outDirIndex + 1]);
 }
 
-
 var header = fs.readFileSync(path.join(__dirname, 'header.ts'), 'utf8');
 header = header.split('// ---split---')[1];
-header = header.replace(/\: any/g, '');
 
 var reportJs = fs.readFileSync(path.join(__dirname, 'reportscript.js'), 'utf8');
 
 if (!debug) {
-	// header = UglifyJS.minify(header, {
-	// 	fromString: true,
-	// 	compress: {
-	// 		properties: false,
-	// 		pure_getters: false
-	// 	},
-	// 	mangle: {
-	// 		toplevel: true
-	// 	}
-	// }).code;
 	header = header.split('\n')
-		.map(function(l) { return l.replace(/^\s*/, '').replace(/\s*$/, '') })
+		.map(function(l) { return l.replace(/^\s*/, '').replace(/\s*$/, '').replace(/\/\/.*/, ''); })
 		.join('');
 
 	reportJs = UglifyJS.minify(reportJs, {

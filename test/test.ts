@@ -179,6 +179,19 @@ suite('tscover', function() {
 		assert(cover.totalBranchCoverage === 1);
 	});
 
+	test('should work with noImplicit options', async () => {
+		await coverProject('project3_keywords', '--noImplicitAny --noImplicitReturns --noImplicitThis --noImplicitUseStrict');
+
+		await execSafe(`node ${path.join(projectFolder('project3_keywords'), 'keywords.js')} --autosavecover`,
+			{ cwd: projectFolder('project3_keywords') });
+		let coverStr = fs.readFileSync(path.join(projectFolder('project3_keywords/coverage'), 'coverage.json'), 'utf8');
+		let cover = JSON.parse(coverStr);
+
+		assert(cover.totalLineCoverage === 1);
+		assert(cover.totalStatCoverage === 1);
+		assert(cover.totalBranchCoverage === 1);
+	});
+
 	test('should work with nested functions', async () => {
 		await coverProject('project4_nested');
 

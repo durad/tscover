@@ -126,14 +126,14 @@ let __fileHash__: any = (Function('return this'))();
 			result.totalBranchCovered += fileBranchCovered;
 		}
 
-		result.files.sort(function(a: { filePath: string }, b: { filePath: string }) { return (a.filePath == b.filePath) ? 0 : (a.filePath > b.filePath ? 1 : -1); })
+		result.files.sort(function(a: { filePath: string }, b: { filePath: string }) { return (a.filePath == b.filePath) ? 0 : (a.filePath > b.filePath ? 1 : -1); });
 
 		if (result.totalStatCount !== 0) result.totalStatCoverage = result.totalStatCovered / result.totalStatCount;
 		if (result.totalBranchCount !== 0) result.totalBranchCoverage = result.totalBranchCovered / result.totalBranchCount;
 		if (result.totalLineCount !== 0) result.totalLineCoverage = result.totalLineCovered / result.totalLineCount;
 
 		return result;
-	}
+	};
 
 	if (!tscover.generateLcov) tscover.generateLcov = function(pathRemap: { from: string, to: string }) {
 		let coverage = tscover.generateCoverage();
@@ -166,7 +166,7 @@ let __fileHash__: any = (Function('return this'))();
 		}
 
 		return p.join('\n');
-	}
+	};
 
 	if (!tscover.saveLcov) tscover.saveLcov = function(lcovPath = '.', pathRemap: { from: string, to: string }) {
 		lcovPath = path.join(lcovPath, 'coverage');
@@ -174,7 +174,7 @@ let __fileHash__: any = (Function('return this'))();
 
 		let lcov = tscover.generateLcov(pathRemap);
 		fs.writeFileSync(path.join(lcovPath, 'lcov.info'), lcov, 'utf8');
-	}
+	};
 
 	if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.', pathRemap: { from: string, to: string }) {
 		let coverage = tscover.generateCoverage();
@@ -277,7 +277,7 @@ let __fileHash__: any = (Function('return this'))();
 		report.push('</html>');
 
 		return report.join('\n');
-	}
+	};
 
 	if (!tscover.saveReport) tscover.saveReport = function(reportPath = '.', pathRemap: { from: string, to: string }) {
 		reportPath = path.join(reportPath, 'coverage');
@@ -285,7 +285,7 @@ let __fileHash__: any = (Function('return this'))();
 
 		let report = tscover.generateReport();
 		fs.writeFileSync(path.join(reportPath, 'coverage.html'), report, 'utf8');
-	}
+	};
 
 	if (!tscover.saveCoverage) tscover.saveCoverage = function(coveragePath = '.') {
 		coveragePath = path.join(coveragePath, 'coverage');
@@ -293,7 +293,7 @@ let __fileHash__: any = (Function('return this'))();
 
 		let coverage = tscover.generateCoverage();
 		fs.writeFileSync(path.join(coveragePath, 'coverage.json'), JSON.stringify(coverage, null, 2), 'utf8');
-	}
+	};
 }
 
 __fileHash__ = __fileHash__.__tscover__.data['__filename__'];

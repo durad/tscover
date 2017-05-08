@@ -1,4 +1,10 @@
 
+@fileListWidth: 260px;
+
+@fileContainerBackground: #bac8d0;
+@sourceBackground: #fcfbf7;
+@lineNumbersColor: #cccbc7;
+
 .viewer__projectHash__ {
 	position: absolute;
 	left: 0px;
@@ -12,14 +18,14 @@
 	left: 0px;
 	top: 0px;
 	bottom: 0px;
-	width: 200px;
+	width: @fileListWidth;
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 13px;
 	background-color: #f6f3ec;
 	// background-color: #fcfbf7;
 	border-right: 1px solid #ccc;
 	box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-	overflow: hidden;
+	overflow: auto;
 	z-index: 10;
 }
 
@@ -33,13 +39,11 @@
 }
 
 .filecontainer__projectHash__.active__projectHash__ {
-	// background-color: #6af;
-	background-color: #bac8d0;
-	// color: #fff;
+	background-color: @fileContainerBackground;
 }
 
 .filepath__projectHash__ {
-	width: 150px;
+	margin-right: 50px;
 	padding: 4px 0px;
 	white-space: nowrap;
 	overflow: hidden;
@@ -68,28 +72,26 @@
 .filecontent__projectHash__ {
 	display: none;
 	position: absolute;
-	left: 200px;
+	left: @fileListWidth;
 	top: 0px;
 	bottom: 0px;
 	right: 0px;
 	font-family: 'Consolas', 'Courier New', monospace;
 	font-size: 14px;
+	overflow: auto;
 }
 
 .filecontent__projectHash__.active__projectHash__ {
 	display: block;
-	background-color: darken(#fcfbf7, 0%);
-	// background-color: #f6f3ec;
+	background-color: @sourceBackground;
 }
 
 .linenumbers__projectHash__ {
 	position: absolute;
 	left: 0px;
-	top: 0px;
-	bottom: 0px;
 	width: 40px;
 	margin: 0px;
-	border-right: 1px solid #cccbc7;
+	border-right: 1px solid @lineNumbersColor;
 	box-sizing: border-box;
 	margin: 0px;
 }
@@ -143,4 +145,29 @@
 	.count__projectHash__ {
 		color: #802;
 	}
+}
+
+
+.key1__projectHash__ {
+	color: #35a;
+}
+
+.key2__projectHash__ {
+	color: #3a8;
+}
+
+.func__projectHash__ {
+	color: #646;
+}
+
+.num__projectHash__ {
+	color: #880;
+}
+
+.str__projectHash__ {
+	color: #720;
+}
+
+.comment__projectHash__ {
+	color: #aaa;
 }

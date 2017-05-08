@@ -206,62 +206,187 @@ let __fileHash__: any = (Function('return this'))();
 		report.push(`<div class="filecontents${projectHash}">`);
 
 		for (let file of coverage.files) {
-			let formattedSource = [];
-			let lineNumbers = [];
+			let wh = [];
+			let white: string = null;
+			let isWhitespace = false;
+			let formattedSource: string[] = [];
+			let lineNumbers: string[] = [];
+			let lineCount = 0;
+			let lastLine = '';
+			let buffer = '';
+			let pch: string = null;
+			let ch: string;
+			let letterOrDigit = /[a-z0-9]+/i;
 
 			let linesMap: { [index: string]: number } = {};
 			for (let line of file.lines) {
 				linesMap[line.l] = line.c;
 			}
 
-			let source = file.sourceCode;
-			let inserts = [];
+			let keywords1 = ['class', 'interface', 'function', 'if', 'else', 'for', 'while', 'do', 'return', 'let'];
+			let keywords2 = ['null', 'undefined', 'any', 'object','string', 'number', 'boolean'];
 
-			for (let branch of file.branches) {
-				if (branch.c[0] === 0) inserts.push({ pos: branch.s, ifType: true });
-				else if (branch.c[1] === 0) inserts.push({ pos: branch.s, ifType: false });
-			}
+			let encodeCh = function() {
+				return ch.replace(/&/g, '&amp;')
+					.replace(/"/g, '&quot;')
+					.replace(/'/g, '&#39;')
+					.replace(/</g, '&lt;')
+					.replace(/>/g, '&gt;')
+					.replace(/\`/g, '&#96;');
+			};
 
-			inserts.sort(function(a, b) { return a.pos - b.pos; });
-			let sourceParts = [];
-			let lastPartPos = 0;
+			let createElem = function(text: string, classes: string[] = []) {
+				let classesStr = (classes.length !== 0) ? ` class="${classes.map(c => { return `${c}${projectHash}` }).join(' ')}"` : '';
 
-			for (let insert of inserts) {
-				sourceParts.push(source.substring(lastPartPos, insert.pos));
+				return `<span${classesStr}>${text}</span>`;
+			};
 
-				if (insert.ifType) {
-					sourceParts.push(`<span class="warrning${projectHash} warrningif${projectHash}" title="If path not taken.">I</span>`);
-				} else {
-					sourceParts.push(`<span class="warrning${projectHash} warrningelse${projectHash}" title="Else path not taken.">E</span>`);
+			let addBuffer = function() {
+				if (buffer.length === 0) return;
+
+				if (white !== null) {
+					if (white[0] === '/') lastLine += createElem(buffer, ['comment']);
+					else lastLine += createElem(buffer, ['str']);
 				}
 
-				lastPartPos = insert.pos;
-			}
+				else if (keywords1.indexOf(buffer) !== -1) lastLine += createElem(buffer, ['key1']);
+				else if (keywords2.indexOf(buffer) != -1) lastLine += createElem(buffer, ['key2']);
+				else if (buffer[0].match(letterOrDigit) && ch === '(') lastLine += createElem(buffer, ['func']);
+				else if (buffer.match(/\d+/)) lastLine += createElem(buffer, ['num']);
+				else lastLine += buffer;
 
-			sourceParts.push(source.substring(lastPartPos));
-			source = sourceParts.join('');
+				buffer = '';
+			};
 
-			source = source.replace(/\r/g, '');
-			let sourceLines = source.split('\n');
-
-			for (let li = 0; li < sourceLines.length; li++) {
-				let lineClass = linesMap[li] !== undefined ? (linesMap[li] === 0 ? `noncovered${projectHash}` : `covered${projectHash}`) : '';
+			let addLine = function() {
 				let countElem = '';
-				if (linesMap[li] !== undefined) {
-					if (linesMap[li] > 0) {
-						countElem = `<span class="covercount${projectHash}">x<span class="count${projectHash}">${linesMap[li]}</span></span>`;
+				if (linesMap[lineCount] !== undefined) {
+					if (linesMap[lineCount] > 0) {
+						countElem = `<span class="covercount${projectHash}">x<span class="count${projectHash}">${linesMap[lineCount]}</span></span>`;
 					} else {
 						countElem = `<span class="covercount${projectHash}"><span class="count${projectHash}">&#33;</span></span>`;
 					}
 				}
 
-				lineNumbers.push(`<div class="linenumber${projectHash} ${lineClass}">${li + 1}</div>`);
+				let lineClass = linesMap[lineCount] !== undefined ? (linesMap[lineCount] === 0 ? `noncovered${projectHash}` : `covered${projectHash}`) : '';
+				lineNumbers.push(`<div class="linenumber${projectHash} ${lineClass}">${lineCount + 1}</div>`);
+				formattedSource.push(`<span class="line${projectHash} ${lineClass}">${lastLine}${countElem}</span>`);
+				lastLine = '';
+				lineCount++;
+			};
 
-				let line = sourceLines[li].replace(/&/g, '&amp;');
-				line = line.replace(/</g, '&lt;');
-				line = line.replace(/>/g, '&gt;');
-				formattedSource.push(`<span class="line${projectHash} ${lineClass}">${line}${countElem}</span>`);
+			for (ch of file.sourceCode) {
+				if (ch === '\r') continue;
+
+				if (white === null) {
+					if (ch.match(letterOrDigit)) {
+						buffer += ch;
+					} else if (ch === '\n') {
+						addBuffer();
+						addLine();
+					} else {
+						addBuffer();
+
+						if (['\'', '"', '`'].indexOf(ch) !== -1 && pch !== '\\') {
+							white = ch;
+							buffer += ch;
+						} else if (pch === '/' && ch === '/') {
+							lastLine = lastLine.substring(0, lastLine.length - 1);
+							buffer = '//';
+							white = '//';
+						} else if (pch === '/' && ch === '*') {
+							lastLine = lastLine.substring(0, lastLine.length - 1);
+							buffer = '/*';
+							white = '/*';
+						} else {
+							lastLine += encodeCh();
+						}
+					}
+				} else {
+					if (ch === white && pch !== '\\') {
+						buffer += ch;
+						addBuffer();
+						white = null;
+					} else if (ch === '\n') {
+						addBuffer();
+						addLine();
+						if (white === '//') white = null;
+					} else if (white === '/*' && pch === '*' && ch === '/') {
+						buffer += ch;
+						addBuffer();
+						white = null;
+					} else {
+						buffer += encodeCh();
+					}
+				}
+
+				pch = ch;
 			}
+
+			addBuffer();
+			addLine();
+
+
+			// let formattedSource: string[] = [];
+			// let lineNumbers: string[] = [];
+
+			// let linesMap: { [index: string]: number } = {};
+			// for (let line of file.lines) {
+			// 	linesMap[line.l] = line.c;
+			// }
+
+			// let source = file.sourceCode;
+			// let inserts = [];
+
+			// for (let branch of file.branches) {
+			// 	if (branch.c[0] === 0) inserts.push({ pos: branch.s, ifType: true });
+			// 	else if (branch.c[1] === 0) inserts.push({ pos: branch.s, ifType: false });
+			// }
+
+			// inserts.sort(function(a, b) { return a.pos - b.pos; });
+			// let sourceParts = [];
+			// let lastPartPos = 0;
+
+			// for (let insert of inserts) {
+			// 	sourceParts.push(source.substring(lastPartPos, insert.pos));
+
+			// 	if (insert.ifType) {
+			// 		sourceParts.push(`<span class="warrning${projectHash} warrningif${projectHash}" title="If path not taken.">I</span>`);
+			// 	} else {
+			// 		sourceParts.push(`<span class="warrning${projectHash} warrningelse${projectHash}" title="Else path not taken.">E</span>`);
+			// 	}
+
+			// 	lastPartPos = insert.pos;
+			// }
+
+			// sourceParts.push(source.substring(lastPartPos));
+			// source = sourceParts.join('');
+
+			// source = source.replace(/\r/g, '');
+			// let sourceLines = source.split('\n');
+
+			// for (let li = 0; li < sourceLines.length; li++) {
+			// 	let lineClass = linesMap[li] !== undefined ? (linesMap[li] === 0 ? `noncovered${projectHash}` : `covered${projectHash}`) : '';
+			// 	let line = sourceLines[li]
+			// 		.replace(/&/g, '&amp;')
+			// 		.replace(/"/g, '&quot;')
+			// 		.replace(/'/g, '&#39;')
+			// 		.replace(/</g, '&lt;')
+			// 		.replace(/>/g, '&gt;')
+			// 		.replace(/\`/g, '&#96;');
+
+			// 	let countElem = '';
+			// 	if (linesMap[li] !== undefined) {
+			// 		if (linesMap[li] > 0) {
+			// 			countElem = `<span class="covercount${projectHash}">x<span class="count${projectHash}">${linesMap[li]}</span></span>`;
+			// 		} else {
+			// 			countElem = `<span class="covercount${projectHash}"><span class="count${projectHash}">&#33;</span></span>`;
+			// 		}
+			// 	}
+
+			// 	lineNumbers.push(`<div class="linenumber${projectHash} ${lineClass}">${li + 1}</div>`);
+			// 	formattedSource.push(`<span class="line${projectHash} ${lineClass}">${line}${countElem}</span>`);
+			// }
 
 			report.push(`<div class="filecontent${projectHash} filecontent${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}">`);
 			report.push(`<div class="linenumbers${projectHash}">${lineNumbers.join('\n')}</div>`);

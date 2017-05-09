@@ -4,6 +4,8 @@
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
 		"noImplicitThis": true,
-		"noImplicitUseStrict": true
+		"noImplicitUseStrict": true,
+		"noUnusedLocals": true,
+		"strictNullChecks": true
 	}
 }

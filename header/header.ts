@@ -206,15 +206,13 @@ let __fileHash__: any = (Function('return this'))();
 		report.push(`<div class="filecontents${projectHash}">`);
 
 		for (let file of coverage.files) {
-			let wh = [];
-			let white: string = null;
-			let isWhitespace = false;
+			let white: string | null = null;
 			let formattedSource: string[] = [];
 			let lineNumbers: string[] = [];
 			let lineCount = 0;
 			let lastLine = '';
 			let buffer = '';
-			let pch: string = null;
+			let pch: string | null = null;
 			let ch: string;
 			let letterOrDigit = /[a-z0-9]+/i;
 

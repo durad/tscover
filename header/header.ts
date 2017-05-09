@@ -298,12 +298,12 @@ let __fileHash__: any = (Function('return this'))();
 							buffer += ch;
 						} else if (pch === '/' && ch === '/') {
 							lastLine = lastLine.substring(0, lastLine.length - 1);
-							buffer = '//';
-							white = '//';
+							buffer = `\/\/`;
+							white = `\/\/`;
 						} else if (pch === '/' && ch === '*') {
 							lastLine = lastLine.substring(0, lastLine.length - 1);
-							buffer = '/*';
-							white = '/*';
+							buffer = `\/\*`;
+							white = `\/\*`;
 						} else {
 							lastLine += encodeCh();
 						}
@@ -316,8 +316,8 @@ let __fileHash__: any = (Function('return this'))();
 					} else if (ch === '\n') {
 						addBuffer();
 						addLine();
-						if (white === '//') white = null;
-					} else if (white === '/*' && pch === '*' && ch === '/') {
+						if (white === `\/\/`) white = null;
+					} else if (white === `\/\*` && pch === '*' && ch === '/') {
 						buffer += ch;
 						addBuffer();
 						white = null;

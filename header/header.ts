@@ -223,8 +223,15 @@ let __fileHash__: any = (Function('return this'))();
 				linesMap[line.l] = line.c;
 			}
 
-			let keywords1 = ['class', 'interface', 'function', 'if', 'else', 'for', 'while', 'do', 'return', 'let'];
-			let keywords2 = ['null', 'undefined', 'any', 'object','string', 'number', 'boolean'];
+			let keywords1 = ['abstract', 'class', 'const', 'constructor', 'debugger', 'declare', 'delete', 'enum', 'extends',
+				'false', 'from', 'function', 'get', 'global', 'implements', 'in', 'instanceof', 'interface', 'is', 'keyof',
+				'let', 'module', 'namespace', 'new', 'null', 'of', 'package', 'private', 'protected', 'public', 'readonly',
+				'require', 'set', 'static', 'super', 'this', 'true', 'type', 'typeof', 'var', 'void'];
+
+			let keywords2 = ['as', 'async', 'await', 'break', 'case', 'catch', 'continue', 'default', 'do', 'else', 'export',
+				'finally', 'for', 'if', 'import', 'return', 'switch', 'throw', 'try', 'while', 'with', 'yield'];
+
+			let keywords3 = ['any', 'boolean', 'never', 'number', 'object', 'string', 'Symbol', 'undefined'];
 
 			let encodeCh = function() {
 				return ch.replace(/&/g, '&amp;')
@@ -251,6 +258,7 @@ let __fileHash__: any = (Function('return this'))();
 
 				else if (keywords1.indexOf(buffer) !== -1) lastLine += createElem(buffer, ['key1']);
 				else if (keywords2.indexOf(buffer) != -1) lastLine += createElem(buffer, ['key2']);
+				else if (keywords3.indexOf(buffer) != -1) lastLine += createElem(buffer, ['key3']);
 				else if (buffer[0].match(letterOrDigit) && ch === '(') lastLine += createElem(buffer, ['func']);
 				else if (buffer.match(/\d+/)) lastLine += createElem(buffer, ['num']);
 				else lastLine += buffer;

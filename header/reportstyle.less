@@ -1,9 +1,25 @@
 
 @fileListWidth: 260px;
 
-@fileContainerBackground: #bac8d0;
-@sourceBackground: #fcfbf7;
-@lineNumbersColor: #cccbc7;
+@fileContainerBackground: #f3f6f6;
+@sourceBackground: #fafafa;
+@lineNumberColor: #333;
+@lineNumberBorder: 1px solid #cccbc7;
+
+@lineNumCoveredBack: #9ac583;
+@coveredBackground: lighten(@lineNumCoveredBack, 22%);
+@coveredCountColor: #bfc2ab;
+
+@lineNumNonCoveredBack: #ec7f74;
+@noncoveredBackground: lighten(@lineNumNonCoveredBack, 20%);
+@noncoveredCountColor: #802;
+
+@key1Color: #35a;
+@key2Color: #538;
+@key3Color: #3a8;
+@numColor: #466;
+@strColor: #720;
+@commentColor: #aaa;
 
 .viewer__projectHash__ {
 	position: absolute;
@@ -21,8 +37,7 @@
 	width: @fileListWidth;
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 13px;
-	background-color: #f6f3ec;
-	// background-color: #fcfbf7;
+	background-color: @fileContainerBackground;
 	border-right: 1px solid #ccc;
 	box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
 	overflow: auto;
@@ -91,7 +106,7 @@
 	left: 0px;
 	width: 40px;
 	margin: 0px;
-	border-right: 1px solid @lineNumbersColor;
+	border-right: @lineNumberBorder;
 	box-sizing: border-box;
 	margin: 0px;
 }
@@ -99,7 +114,15 @@
 .linenumber__projectHash__ {
 	text-align: right;
 	padding-right: 3px;
-	color: #678;
+	color: @lineNumberColor;
+
+	&.covered__projectHash__ {
+		background-color: @lineNumCoveredBack;
+	}
+
+	&.noncovered__projectHash__ {
+		background-color: @lineNumNonCoveredBack;
+	}
 }
 
 .source__projectHash__ {
@@ -132,42 +155,42 @@
 .covercount__projectHash__ {
 	position: absolute;
 	right: 5px;
-	color: #bfc2ab;
+	color: @coveredCountColor;
 }
 
 .covered__projectHash__ {
-	background-color: saturate(lighten(#dbdfca, 0%), 3%);
+	background-color: @coveredBackground;
 }
 
 .noncovered__projectHash__ {
-	background-color: saturate(lighten(#d5bbb7, 5%), 15%);
+	background-color: @noncoveredBackground;
 
 	.count__projectHash__ {
-		color: #802;
+		color: @noncoveredCountColor;
 	}
 }
 
 
 .key1__projectHash__ {
-	color: #35a;
+	color: @key1Color;
 }
 
 .key2__projectHash__ {
-	color: #3a8;
+	color: @key2Color;
 }
 
-.func__projectHash__ {
-	color: #646;
+.key3__projectHash__ {
+	color: @key3Color;
 }
 
 .num__projectHash__ {
-	color: #880;
+	color: @numColor;
 }
 
 .str__projectHash__ {
-	color: #720;
+	color: @strColor;
 }
 
 .comment__projectHash__ {
-	color: #aaa;
+	color: @commentColor;
 }

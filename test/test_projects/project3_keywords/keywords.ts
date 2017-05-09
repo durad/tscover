@@ -24,27 +24,32 @@ let t = typeof v;
 // null
 let n = null;
 
-let o = {
-	a: 1,
-	b: 'b',
-	d: 'deleteme'
-};
+if (1 > 2) {
 
-// delete
-delete o.d;
+	let o = {
+		a: 1,
+		b: 'b',
+		d: 'deleteme'
+	};
 
-// enum
-enum e {
-	cats,
-	dogs,
-	cows
-}
+	// delete
+	delete o.d;
 
-let animal: e = e.cats;
+	// enum
+	enum e {
+		cats,
+		dogs,
+		cows
+	}
 
-// in
-for (let k in o) {
-	console.log(typeof (<any>o)[k], k, (<any>o)[k]);
+	let animal: e = e.cats;
+
+
+	// in
+	for (let k in o) {
+		console.log(typeof (<any>o)[k], k, (<any>o)[k]);
+	}
+
 }
 
 // for

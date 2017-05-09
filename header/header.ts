@@ -177,7 +177,7 @@ let __fileHash__: any = (Function('return this'))();
 
 	if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.', pathRemap: { from: string, to: string }) {
 		let coverage = tscover.generateCoverage();
-		let report = [];
+		let report: string[] = [];
 
 		report.push('<html>');
 		report.push('<head>');
@@ -192,13 +192,54 @@ let __fileHash__: any = (Function('return this'))();
 		report.push(`<div class="viewer${projectHash}">`);
 		report.push(`<div class="filelist${projectHash}">`);
 
+		let root: any = { folders: {}, files: [] };
+
 		for (let file of coverage.files) {
-			report.push(`<div class="filecontainer${projectHash} filecontainer${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}" onclick="selectFile('${file.hash}')">`);
-			report.push(`<div class="filepath${projectHash}">${file.filePath}</div>`);
-			let fileStat = `${Math.round(file.lineCoverage * 1000) / 10}%`;
-			let fileStatClass = file.lineCoverage === 1 ? 'green' : 'red';
-			report.push(`<div class="filestat${projectHash} ${fileStatClass}${projectHash}">${fileStat}</div>`);
+			let parts = file.filePath.split(/\/|\\/);
+			file.name = parts[parts.length - 1];
+			let folder: { [index: string]: any } = root;
+			for (let part of parts.slice(0, -1)) {
+				if (part === '') continue;
+				folder.folders[part] = folder.folders[part] || { folders: {}, files: [], name: part };
+				folder = folder.folders[part];
+			}
+
+			folder.files.push(file);
+		}
+
+		let keys = function(o: any) {
+			let ks = [];
+			for (let k in o) ks.push(k);
+			return ks;
+		}
+
+		while (keys(root.folders).length === 1) {
+			root = root.folders[keys(root.folders)[0]];
+		}
+
+		let createFolderElem = function(folder: any) {
+			report.push(`<div class="foldername${projectHash}">${folder.name}</div>`);
+			report.push(`<div class="foldercontent${projectHash}">`)
+
+			for (let subfolder in folder.folders) {
+				createFolderElem(folder.folders[subfolder]);
+			}
+
+			for (let file of folder.files) {
+				report.push(`<div class="filecontainer${projectHash} filecontainer${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}" onclick="selectFile('${file.hash}')">`);
+				report.push(`<div class="filepath${projectHash}">${file.name}</div>`);
+				let fileStat = `${Math.round(file.lineCoverage * 1000) / 10}%`;
+				let fileStatClass = file.lineCoverage === 1 ? 'green' : 'red';
+				report.push(`<div class="filestat${projectHash} ${fileStatClass}${projectHash}">${fileStat}</div>`);
+				report.push(`</div>`);
+			}
+
 			report.push(`</div>`);
+		}
+
+		createFolderElem(root);
+
+		for (let file of coverage.files) {
 		}
 
 		report.push('</div>');

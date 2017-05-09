@@ -57,15 +57,42 @@
 	background-color: @fileContainerBackground;
 }
 
+.foldercontainer__projectHash__ {
+}
+
+.foldername__projectHash__ {
+	font-weight: bold;
+}
+
+.foldername__projectHash__:before {
+	content: " ";
+	display: inline-block;
+	position: relative;
+	width: 18px;
+	height: 15px;
+	background-color: #fc5;
+	border: 1px solid darken(#fc5, 10%);
+	box-sizing: border-box;
+	top: 3px;
+	margin-right: 5px;
+	border-radius: 2px;
+	border-top-right-radius: 4px;
+}
+
+.foldercontent__projectHash__ {
+	padding-left: 20px;
+	border-left: 1px dotted #ccc;
+}
+
 .filepath__projectHash__ {
 	margin-right: 50px;
 	padding: 4px 0px;
 	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	direction:rtl;
-	text-align:right;
-	unicode-bidi: plaintext;
+	// overflow: hidden;
+	// text-overflow: ellipsis;
+	// direction:rtl;
+	// text-align:right;
+	// unicode-bidi: plaintext;
 }
 
 .filestat__projectHash__ {

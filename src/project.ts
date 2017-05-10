@@ -17,11 +17,8 @@ export class ProjectInstrumenter {
 	 */
 	run() {
 		// capture installed TypesScript compiler and its createProgram func
-		let globalModulesPath = require('global-modules');
-		let typescriptRoot: string = path.join(globalModulesPath, 'typescript');
-		let typescriptResolved: string = require.resolve(typescriptRoot);
+		let typescriptResolved: string = require.resolve('typescript');
 		let tscRoot: string = path.dirname(typescriptResolved);
-		let typescript: any = require(typescriptResolved);
 		let tscPath: string = path.join(tscRoot, 'tsc.js');
 		let tscCode: string = fs.readFileSync(tscPath, 'utf8');
 		tscCode = tscCode.replace(/ts.executeCommandLine\(ts\.sys\.args\)\;/, '// ts.executeCommandLine(ts.sys.args);');

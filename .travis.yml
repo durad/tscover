@@ -6,7 +6,6 @@ node_js:
   - 7
   - 6
 install:
-  - npm install -g typescript
   - npm install -g mocha
   - npm install
   - npm link

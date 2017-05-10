@@ -53,7 +53,7 @@ export class SourceInstrumenter {
 		this.statements = [];
 		this.branches = [];
 
-		this.instrumentedSource = this.visitNode(this.source, { kind: null }, { kind: null }, 0, 0, false);
+		this.instrumentedSource = this.visitNode(this.source, { kind: null }, { kind: null }, [this.source], 0, 0, false);
 
 		// prepend header to instrumented source
 		let header = fs.readFileSync(path.join(__dirname, 'header.tmpl'), 'utf8')
@@ -119,6 +119,7 @@ export class SourceInstrumenter {
 	protected visitNode(node: typescript.Node,
 		parent: typescript.Node | { kind: any },
 		grandParent: typescript.Node | { kind: any },
+		siblings: typescript.Node[],
 		depth: number,
 		index: number,
 		prefixed: boolean): string
@@ -155,6 +156,14 @@ export class SourceInstrumenter {
 			}
 		}
 
+		if (node.kind === this.sk.FunctionDeclaration &&
+			index !== 0 &&
+			siblings[index - 1].kind === this.sk.FunctionDeclaration &&
+			siblings[index - 1].getChildren()[siblings[index - 1].getChildCount() - 1].kind !== this.sk.Block
+		) {
+			prefixed = true;
+		}
+
 		if (!prefixed &&
 			parent.kind === this.sk.SyntaxList &&
 			(grandParent.kind === this.sk.SourceFile || grandParent.kind === this.sk.Block) &&
@@ -166,16 +175,16 @@ export class SourceInstrumenter {
 
 		if (node.kind === this.sk.IfStatement) {
 			let ifStatement = node as typescript.IfStatement;
-			let expVisit = this.visitNode(ifStatement.expression, ifStatement, parent, depth + 1, 0, false);
-			let thenVisit = this.visitNode(ifStatement.thenStatement, ifStatement, parent, depth + 1, 0, false);
-			let elseVisit = this.visitNode(ifStatement.elseStatement, ifStatement, parent, depth + 1, 0, false);
+			let expVisit = this.visitNode(ifStatement.expression, ifStatement, parent, [ifStatement.expression], depth + 1, 0, false);
+			let thenVisit = this.visitNode(ifStatement.thenStatement, ifStatement, parent, [ifStatement.thenStatement], depth + 1, 0, false);
+			let elseVisit = this.visitNode(ifStatement.elseStatement, ifStatement, parent, [ifStatement.elseStatement], depth + 1, 0, false);
 
 			let branch = this.reportBranch(ifStatement);
 			childVisit = trivia + `if (${expVisit}) { ${branch}[0]++; ${thenVisit} } else { ${branch}[1]++; ${elseVisit} } `;
 		} else {
 			let p = [];
 			for (let i = 0; i < children.length; i++) {
-				p.push(this.visitNode(children[i], node, parent, depth + 1, i, false));
+				p.push(this.visitNode(children[i], node, parent, children, depth + 1, i, prefixed && i === 0));
 			}
 
 			childVisit = p.join('');

@@ -1,9 +1,23 @@
 
 var fs = require('fs');
 var path = require('path');
+var child_process = require('child_process');
 var UglifyJS = require("uglify-js");
 var less = require('less');
 var LessPluginCleanCSS = require('less-plugin-clean-css');
+
+var headercodePath = path.join(__dirname, 'headercode.ts');
+console.log(headercodePath);
+var headercodeCmd = 'tsc ' + headercodePath + ' --outFile /dev/stdout';
+// var c = child_process.execSync(headercodeCmd, { stdio: 'pipe' }).toString();
+// console.log(c);
+
+var proc = child_process.exec(headercodeCmd, { stdio: 0 });
+proc.stdout.on('data', function(chunk) {
+	console.log(chunk);
+});
+
+return;
 
 var debug = process.argv.indexOf('--debug') !== -1;
 

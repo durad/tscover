@@ -73,6 +73,15 @@ if (!tscover.generateCoverage) tscover.generateCoverage = function() {
 			linesMap[statement.l].c += statement.c;
 		}
 
+		for (let branch of fileData.b) {
+			if (!linesMap[branch.l]) {
+				linesMap[branch.l] = { l: branch.l, c: 0 };
+				lines.push(linesMap[branch.l]);
+			}
+
+			linesMap[branch.l].c += branch.c[0];
+		}
+
 		if (fileStatCount !== 0) fileStatCoverage = fileStatCovered / fileStatCount;
 
 		// lines
@@ -204,17 +213,17 @@ if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.',
 	report.push(`<div class="filecontents${projectHash}">`);
 
 	for (let file of coverage.files) {
-		let white: string | null = null;
+		let white: string = null;
 		let formattedSource: string[] = [];
 		let lineNumbers: string[] = [];
 		let lineCount = 0;
 		let lastLine = '';
 		let buffer = '';
-		let pch: string | null = null;
+		let pch: string = null;
 		let ch: string;
 		let letterOrDigit = /[a-z0-9]+/i;
 
-		let linesMap: { [index: string]: number } = {};
+		let linesMap = {};
 		for (let line of file.lines) {
 			linesMap[line.l] = line.c;
 		}
@@ -279,8 +288,28 @@ if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.',
 			lineCount++;
 		};
 
-		for (ch of file.sourceCode) {
+		let inserts = {};
+		for (let branch of file.branches) {
+			if (branch.c[0] === 0) inserts[branch.s] = { ifType: true };
+			if (branch.c[0] === 1) inserts[branch.s] = { ifType: false };
+		}
+
+		for (let i = 0; i < file.sourceCode.length; i++) {
+			ch = file.sourceCode[i];
+
 			if (ch === '\r') continue;
+
+			if (inserts[i] !== undefined) {
+				addBuffer();
+
+				if (inserts[i].ifType) {
+					buffer += `<span class="warrning${projectHash} warrningif${projectHash}" title="If path not taken.">I</span>`;
+				} else {
+					buffer += `<span class="warrning${projectHash} warrningelse${projectHash}" title="Else path not taken.">E</span>`;
+				}
+
+				addBuffer();
+			}
 
 			if (white === null) {
 				if (ch.match(letterOrDigit)) {
@@ -329,68 +358,6 @@ if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.',
 
 		addBuffer();
 		addLine();
-
-
-		// let formattedSource: string[] = [];
-		// let lineNumbers: string[] = [];
-
-		// let linesMap: { [index: string]: number } = {};
-		// for (let line of file.lines) {
-		// 	linesMap[line.l] = line.c;
-		// }
-
-		// let source = file.sourceCode;
-		// let inserts = [];
-
-		// for (let branch of file.branches) {
-		// 	if (branch.c[0] === 0) inserts.push({ pos: branch.s, ifType: true });
-		// 	else if (branch.c[1] === 0) inserts.push({ pos: branch.s, ifType: false });
-		// }
-
-		// inserts.sort(function(a, b) { return a.pos - b.pos; });
-		// let sourceParts = [];
-		// let lastPartPos = 0;
-
-		// for (let insert of inserts) {
-		// 	sourceParts.push(source.substring(lastPartPos, insert.pos));
-
-		// 	if (insert.ifType) {
-		// 		sourceParts.push(`<span class="warrning${projectHash} warrningif${projectHash}" title="If path not taken.">I</span>`);
-		// 	} else {
-		// 		sourceParts.push(`<span class="warrning${projectHash} warrningelse${projectHash}" title="Else path not taken.">E</span>`);
-		// 	}
-
-		// 	lastPartPos = insert.pos;
-		// }
-
-		// sourceParts.push(source.substring(lastPartPos));
-		// source = sourceParts.join('');
-
-		// source = source.replace(/\r/g, '');
-		// let sourceLines = source.split('\n');
-
-		// for (let li = 0; li < sourceLines.length; li++) {
-		// 	let lineClass = linesMap[li] !== undefined ? (linesMap[li] === 0 ? `noncovered${projectHash}` : `covered${projectHash}`) : '';
-		// 	let line = sourceLines[li]
-		// 		.replace(/&/g, '&amp;')
-		// 		.replace(/"/g, '&quot;')
-		// 		.replace(/'/g, '&#39;')
-		// 		.replace(/</g, '&lt;')
-		// 		.replace(/>/g, '&gt;')
-		// 		.replace(/\`/g, '&#96;');
-
-		// 	let countElem = '';
-		// 	if (linesMap[li] !== undefined) {
-		// 		if (linesMap[li] > 0) {
-		// 			countElem = `<span class="covercount${projectHash}">x<span class="count${projectHash}">${linesMap[li]}</span></span>`;
-		// 		} else {
-		// 			countElem = `<span class="covercount${projectHash}"><span class="count${projectHash}">&#33;</span></span>`;
-		// 		}
-		// 	}
-
-		// 	lineNumbers.push(`<div class="linenumber${projectHash} ${lineClass}">${li + 1}</div>`);
-		// 	formattedSource.push(`<span class="line${projectHash} ${lineClass}">${line}${countElem}</span>`);
-		// }
 
 		report.push(`<div class="filecontent${projectHash} filecontent${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}">`);
 		report.push(`<div class="linenumbers${projectHash}">${lineNumbers.join('\n')}</div>`);

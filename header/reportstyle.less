@@ -19,6 +19,9 @@
 @noncoveredBackground: lighten(@lineNumNonCoveredBack, 20%);
 @noncoveredCountColor: #802;
 
+@warrningTextColor: #802;
+@warrningBack: #f8d2ce;
+
 @key1Color: #35a;
 @key2Color: #538;
 @key3Color: #3a8;
@@ -150,12 +153,13 @@
 }
 
 .warrning__projectHash__ {
-	padding: 0px 5px;
+	color: @warrningTextColor;
+	padding: 0px 4px;
 	margin: 0px 2px;
-	font-size: 12px;
-	background-color: saturate(lighten(#d5bbb7, 5%), 15%);
-	border-radius: 2px;
-	border: 1px solid #802;
+	font-size: 11px;
+	background-color: @warrningBack;
+	border-radius: 3px;
+	border: 1px solid @warrningTextColor;
 }
 
 .covercount__projectHash__ {

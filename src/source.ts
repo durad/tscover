@@ -14,6 +14,7 @@ export class SourceInstrumenter {
 	instrumentedSource: string;
 	statements: any[];
 	branches: any[];
+	instrument: boolean;
 
 	/**
 	 * Constructs SourceInstrumenter instance
@@ -63,8 +64,6 @@ export class SourceInstrumenter {
 
 		header = this.replace(header, '__statements__', JSON.stringify(this.statements));
 		header = this.replace(header, '__branches__', JSON.stringify(this.branches));
-		// let code = JSON.stringify(this.source.getFullText());
-		// code = code.replace(/\`/g, '\\`');
 		header = this.replace(header, '__sourceCode__', JSON.stringify(this.source.getFullText()));
 
 		let instrumentedLines = this.instrumentedSource.split('\n');
@@ -77,7 +76,9 @@ export class SourceInstrumenter {
 			this.instrumentedSource = header + this.instrumentedSource;
 		}
 
-		fs.writeFileSync(this.fileName + '.covered', this.instrumentedSource);
+		if (this.project.options.instrument) {
+			fs.writeFileSync(this.fileName + '.cover', this.instrumentedSource);
+		}
 	}
 
 	/**

@@ -11,11 +11,21 @@ import { SourceInstrumenter } from './source';
 export class ProjectInstrumenter {
 	sk: any;
 	hash: string;
+	options = {
+		instrument: false
+	};
 
 	/**
 	 * Main entry point into compilation process
 	 */
 	run() {
+		// TODO: commander
+		let instrumentIndex = process.argv.indexOf('--instrument');
+		if (instrumentIndex !== -1) {
+			this.options.instrument = true;
+			process.argv.splice(instrumentIndex, 1);
+		}
+
 		// capture installed TypesScript compiler and its createProgram func
 		let typescriptResolved: string = require.resolve('typescript');
 		let tscRoot: string = path.dirname(typescriptResolved);

@@ -22,7 +22,6 @@ var headercodeStr = fs.readFileSync(headercodePath, 'utf8');
 var result = ts.transpileModule(headercodeStr, { compilerOptions: { module: ts.ModuleKind.CommonJS } });
 var headercodeCompiled = result.outputText;
 
-
 var reportJs = fs.readFileSync(path.join(__dirname, 'reportscript.js'), 'utf8');
 
 if (!debug) {
@@ -37,7 +36,7 @@ if (!debug) {
 			pure_getters: false
 		},
 		mangle: {
-			toplevel: true
+			toplevel: false
 		}
 	}).code;
 
@@ -48,16 +47,10 @@ if (!debug) {
 			pure_getters: false
 		},
 		mangle: {
-			toplevel: true
+			toplevel: false
 		}
 	}).code;
 }
-
-// console.log(headercodeCompiled);
-
-
-// console.log(headercodeCompiled);
-
 
 var reportStyle = fs.readFileSync(path.join(__dirname, 'reportstyle.less'), 'utf8');
 
@@ -69,7 +62,6 @@ if (process.argv.indexOf('--debug') === -1) {
 less.render(reportStyle, { plugins: plugins })
 	.then(function(result){
 		var css = result.css;
-		// css = css.replace(/__projectHash__/g, '${projectHash}');
 		css = css.split('\n').map(function(l) { return JSON.stringify(l); }).join(' +\n');
 
 		reportJs = reportJs.split('\n').map(function(l) { return JSON.stringify(l); }).join(' +\n');
@@ -78,18 +70,7 @@ less.render(reportStyle, { plugins: plugins })
 		headercodeCompiled = headercodeCompiled.replace('__REPORTCSS__', css);
 		headercodeCompiled = headercodeCompiled.replace(/\\/g, '\\\\');
 		headercodeCompiled = headercodeCompiled.replace(/\`/g, "\\`");
-		// headercodeCompiled = headercodeCompiled.replace(/\\\\\`/g, "\\\\\\\`");
 		headercodeCompiled = headercodeCompiled.replace(/\$/g, '\\$');
-		// headercodeCompiled = headercodeCompiled.replace(/\\\\\$/g, '\\\\\\\$');
-
-// jsStringEscape = require('js-string-escape')
-// var escapedString = jsStringEscape('how `much` $ for "a \` \'unicorn?');
-// //=> 'how much \$ for a unicorn\?' 
-// console.log(escapedString); 
-// escape_quotes = require('escape-quotes');
-
-
-		// headercodeCompiled = headercodeCompiled.split('\n').map(function(l) { return JSON.stringify(l); }).join(' +\n');
 
 		header = header.replace('__headerCode__', headercodeCompiled);
 

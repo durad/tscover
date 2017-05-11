@@ -1,6 +1,6 @@
 
 function removeClass(e, cls) {
-	var reg = new RegExp('(\\\\s|^)'+cls+'(\\\\s|$)');
+	var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
 	e.className = e.className.replace(reg,' ');
 }
 
@@ -9,8 +9,8 @@ function addClass(e, cls) {
 }
 
 function selectFile(fileHash) {
-	removeClass(document.querySelector('.filecontainer${projectHash}.active${projectHash}'), 'active${projectHash}');
-	removeClass(document.querySelector('.filecontent${projectHash}.active${projectHash}'), 'active${projectHash}');
-	addClass(document.querySelector('.filecontainer' + fileHash), 'active${projectHash}');
-	addClass(document.querySelector('.filecontent' + fileHash), 'active${projectHash}');
+	removeClass(document.querySelector('.filecontainer__projectHash__.active__projectHash__'), 'active__projectHash__');
+	removeClass(document.querySelector('.filecontent__projectHash__.active__projectHash__'), 'active__projectHash__');
+	addClass(document.querySelector('.filecontainer' + fileHash), 'active__projectHash__');
+	addClass(document.querySelector('.filecontent' + fileHash), 'active__projectHash__');
 }

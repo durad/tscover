@@ -5,19 +5,7 @@ var child_process = require('child_process');
 var UglifyJS = require("uglify-js");
 var less = require('less');
 var LessPluginCleanCSS = require('less-plugin-clean-css');
-
-var headercodePath = path.join(__dirname, 'headercode.ts');
-console.log(headercodePath);
-var headercodeCmd = 'tsc ' + headercodePath + ' --outFile /dev/stdout';
-// var c = child_process.execSync(headercodeCmd, { stdio: 'pipe' }).toString();
-// console.log(c);
-
-var proc = child_process.exec(headercodeCmd, { stdio: 0 });
-proc.stdout.on('data', function(chunk) {
-	console.log(chunk);
-});
-
-return;
+var ts = require('typescript');
 
 var debug = process.argv.indexOf('--debug') !== -1;
 
@@ -28,7 +16,12 @@ if (outDirIndex !== -1 && process.argv.length >= outDirIndex + 1) {
 }
 
 var header = fs.readFileSync(path.join(__dirname, 'header.ts'), 'utf8');
-header = header.split('// ---split---')[1];
+
+var headercodePath = path.join(__dirname, 'headercode.ts');
+var headercodeStr = fs.readFileSync(headercodePath, 'utf8');
+var result = ts.transpileModule(headercodeStr, { compilerOptions: { module: ts.ModuleKind.CommonJS } });
+var headercodeCompiled = result.outputText;
+
 
 var reportJs = fs.readFileSync(path.join(__dirname, 'reportscript.js'), 'utf8');
 
@@ -47,9 +40,24 @@ if (!debug) {
 			toplevel: true
 		}
 	}).code;
+
+	headercodeCompiled = UglifyJS.minify(headercodeCompiled, {
+		fromString: true,
+		compress: {
+			properties: false,
+			pure_getters: false
+		},
+		mangle: {
+			toplevel: true
+		}
+	}).code;
 }
 
-header = header.replace('__REPORTJS__', reportJs)
+// console.log(headercodeCompiled);
+
+
+// console.log(headercodeCompiled);
+
 
 var reportStyle = fs.readFileSync(path.join(__dirname, 'reportstyle.less'), 'utf8');
 
@@ -61,8 +69,30 @@ if (process.argv.indexOf('--debug') === -1) {
 less.render(reportStyle, { plugins: plugins })
 	.then(function(result){
 		var css = result.css;
-		css = css.replace(/__projectHash__/g, '${projectHash}');
-		header = header.replace('__REPORTCSS__', css);
+		// css = css.replace(/__projectHash__/g, '${projectHash}');
+		css = css.split('\n').map(function(l) { return JSON.stringify(l); }).join(' +\n');
+
+		reportJs = reportJs.split('\n').map(function(l) { return JSON.stringify(l); }).join(' +\n');
+
+		headercodeCompiled = headercodeCompiled.replace('__REPORTJS__', reportJs)
+		headercodeCompiled = headercodeCompiled.replace('__REPORTCSS__', css);
+		headercodeCompiled = headercodeCompiled.replace(/\\/g, '\\\\');
+		headercodeCompiled = headercodeCompiled.replace(/\`/g, "\\`");
+		// headercodeCompiled = headercodeCompiled.replace(/\\\\\`/g, "\\\\\\\`");
+		headercodeCompiled = headercodeCompiled.replace(/\$/g, '\\$');
+		// headercodeCompiled = headercodeCompiled.replace(/\\\\\$/g, '\\\\\\\$');
+
+// jsStringEscape = require('js-string-escape')
+// var escapedString = jsStringEscape('how `much` $ for "a \` \'unicorn?');
+// //=> 'how much \$ for a unicorn\?' 
+// console.log(escapedString); 
+// escape_quotes = require('escape-quotes');
+
+
+		// headercodeCompiled = headercodeCompiled.split('\n').map(function(l) { return JSON.stringify(l); }).join(' +\n');
+
+		header = header.replace('__headerCode__', headercodeCompiled);
+
 		fs.writeFileSync(path.join(outDir, 'header.tmpl'), header, 'utf8');
 
 		if (process.argv.indexOf('--debug') !== -1) {

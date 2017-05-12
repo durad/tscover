@@ -9,7 +9,7 @@ export class SourceInstrumenter {
 	project: ProjectInstrumenter;
 	sk: any;
 	hash: string;
-	fileName: string;
+	filePath: string;
 	source: typescript.SourceFile;
 	instrumentedSource: string;
 	statements: any[];
@@ -23,11 +23,11 @@ export class SourceInstrumenter {
 	 * @param fileName File name of the current source
 	 * @param source SourceFile node that we will instrument
 	 */
-	constructor(project: ProjectInstrumenter, fileName: string, source: typescript.SourceFile) {
+	constructor(project: ProjectInstrumenter, filePath: string, source: typescript.SourceFile) {
 		this.project = project;
 		this.sk = project.sk;
 		this.hash = Util.calculateHash([source]);
-		this.fileName = path.resolve(fileName);
+		this.filePath = path.resolve(filePath);
 		this.source = source;
 	}
 
@@ -56,11 +56,14 @@ export class SourceInstrumenter {
 
 		this.instrumentedSource = this.visitNode(this.source, { kind: null }, { kind: null }, [this.source], 0, 0, false);
 
+		// covert windows paths to *nix style
+		let filePathNix = this.filePath.replace(/\\/g, '/');
+
 		// prepend header to instrumented source
 		let header = fs.readFileSync(path.join(__dirname, 'header.tmpl'), 'utf8')
 			.replace(/__projectHash__/g, this.project.hash)
 			.replace(/__fileHash__/g, this.hash)
-			.replace(/__filename__/g, this.fileName)
+			.replace(/__filename__/g, filePathNix)
 
 		header = this.replace(header, '__statements__', JSON.stringify(this.statements));
 		header = this.replace(header, '__branches__', JSON.stringify(this.branches));
@@ -77,7 +80,7 @@ export class SourceInstrumenter {
 		}
 
 		if (this.project.options.instrument) {
-			fs.writeFileSync(this.fileName + '.cover', this.instrumentedSource);
+			fs.writeFileSync(this.filePath + '.cover', this.instrumentedSource);
 		}
 	}
 

@@ -30,7 +30,6 @@ if (!debug) {
 		.join('');
 
 	reportJs = UglifyJS.minify(reportJs, {
-		fromString: true,
 		compress: {
 			properties: false,
 			pure_getters: false
@@ -41,7 +40,6 @@ if (!debug) {
 	}).code;
 
 	headercodeCompiled = UglifyJS.minify(headercodeCompiled, {
-		fromString: true,
 		compress: {
 			properties: false,
 			pure_getters: false

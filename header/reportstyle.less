@@ -68,13 +68,14 @@
 
 .filepath__projectHash__ {
 	margin-right: 50px;
-	padding: 4px 0px;
+	padding: 4px 0px 4px 6px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	direction: rtl;
 	text-align: left;
 	unicode-bidi: plaintext;
+
 }
 
 .filestat__projectHash__ {
@@ -83,14 +84,14 @@
 	top: 0px;
 	box-sizing: border-box;
 	padding: 4px 0px;
-}
 
-.filestat__projectHash__.green__projectHash__ {
-	color: @fileListCoveredColor;
-}
+	&.green__projectHash__ {
+		color: @fileListCoveredColor;
+	}
 
-.filestat__projectHash__.red__projectHash__ {
-	color: @fileListNonCoveredColor;
+	&.red__projectHash__ {
+		color: @fileListNonCoveredColor;
+	}
 }
 
 .filecontent__projectHash__ {

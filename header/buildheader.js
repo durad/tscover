@@ -61,13 +61,12 @@ if (process.argv.indexOf('--debug') === -1) {
 
 less.render(reportStyle, { plugins: plugins })
 	.then(function(result){
-		var css = result.css;
-		css = css.split('\n').map(function(l) { return JSON.stringify(l); }).join(' +\n');
-
-		reportJs = reportJs.split('\n').map(function(l) { return JSON.stringify(l); }).join(' +\n');
+		var reportCss = result.css;
+		reportCss = reportCss.split('\n').map(function(l) { return JSON.stringify(l + (debug ? '\n' : '')); }).join(' +\n');
+		reportJs = reportJs.split('\n').map(function(l) { return JSON.stringify(l + (debug ? '\n' : '')); }).join(' +\n');
 
 		headercodeCompiled = headercodeCompiled.replace('__REPORTJS__', reportJs)
-		headercodeCompiled = headercodeCompiled.replace('__REPORTCSS__', css);
+		headercodeCompiled = headercodeCompiled.replace('__REPORTCSS__', reportCss);
 		headercodeCompiled = headercodeCompiled.replace(/\\/g, '\\\\');
 		headercodeCompiled = headercodeCompiled.replace(/\`/g, "\\`");
 		headercodeCompiled = headercodeCompiled.replace(/\$/g, '\\$');

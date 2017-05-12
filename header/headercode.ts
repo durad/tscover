@@ -199,14 +199,49 @@ if (!tscover.generateReport) tscover.generateReport = function(reportPath = '.',
 	report.push(`<div class="viewer${projectHash}">`);
 	report.push(`<div class="filelist${projectHash}">`);
 
+	let root: any = { folders: [], files: [], name: '' };
+
 	for (let file of coverage.files) {
-		report.push(`<div class="filecontainer${projectHash} filecontainer${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}" onclick="selectFile('${file.hash}')">`);
-		report.push(`<div class="filepath${projectHash}">${file.filePath}</div>`);
-		let fileStat = `${Math.round(file.lineCoverage * 1000) / 10}%`;
-		let fileStatClass = file.lineCoverage === 1 ? 'green' : 'red';
-		report.push(`<div class="filestat${projectHash} ${fileStatClass}${projectHash}">${fileStat}</div>`);
-		report.push(`</div>`);
+		let parts = file.filePath.split(/\/|\\/);
+		file.name = parts[parts.length - 1];
+		let folder = root;
+
+		for (let part of parts.slice(0, -1)) {
+			if (part === '') continue;
+			let subFolder = folder.folders.filter(f => f.name === part)[0];
+
+			if (!subFolder) {
+				subFolder = { folders: [], files: [], name: part };
+				folder.folders.push(subFolder);
+			}
+
+			folder = subFolder;
+		}
+
+		folder.files.push(file);
 	}
+
+	let remove = '';
+	while (root.folders.length === 1 && root.files.length === 0) {
+		root = root.folders[0];
+	}
+
+	let visitFolder = function(folder: { folders: any[], files: any[], name: string }, prefix: string) {
+		for (let subFolder of folder.folders) {
+			visitFolder(subFolder, prefix + subFolder.name + '/');
+		}
+
+		for (let file of folder.files) {
+			report.push(`<div class="filecontainer${projectHash} filecontainer${file.hash} ${file === coverage.files[0] ? ('active' + projectHash) : ''}" onclick="selectFile('${file.hash}')">`);
+			report.push(`<div class="filepath${projectHash}">${prefix + file.name}</div>`);
+			let fileStat = `${Math.round(file.lineCoverage * 1000) / 10}%`;
+			let fileStatClass = file.lineCoverage === 1 ? 'green' : 'red';
+			report.push(`<div class="filestat${projectHash} ${fileStatClass}${projectHash}">${fileStat}</div>`);
+			report.push(`</div>`);
+		}
+	};
+
+	visitFolder(root, '');
 
 	report.push('</div>');
 

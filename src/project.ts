@@ -20,7 +20,7 @@ export class ProjectInstrumenter {
 	 */
 	run() {
 		// TODO: commander
-		let instrumentIndex = process.argv.indexOf('--instrument');
+		let instrumentIndex = process.argv.indexOf('--tscover-instrument');
 		if (instrumentIndex !== -1) {
 			this.options.instrument = true;
 			process.argv.splice(instrumentIndex, 1);

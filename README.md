@@ -2,7 +2,7 @@
 
 TSCover is a drop-in replacement for tsc compiler that produces instrumented javascript used to collect code coverage information. Code coverage is saved in the form of LCOV files, json data or as an HTML report.
 
-# Usage
+## Usage
 
 TSCover requires `typescript` library so first step is to make sure that typescript is installed globally:
 

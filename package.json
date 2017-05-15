@@ -41,6 +41,6 @@
     "uglify-js": "^3.0.4"
   },
   "dependencies": {
-    "typescript": "^2.3.2"
+    "global-modules": "^0.2.3"
   }
 }

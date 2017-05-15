@@ -20,15 +20,18 @@ export class ProjectInstrumenter {
 	 */
 	run() {
 		// TODO: commander
-		let instrumentIndex = process.argv.indexOf('--instrument');
+		let instrumentIndex = process.argv.indexOf('--tscover-instrument');
 		if (instrumentIndex !== -1) {
 			this.options.instrument = true;
 			process.argv.splice(instrumentIndex, 1);
 		}
 
 		// capture installed TypesScript compiler and its createProgram func
-		let typescriptResolved: string = require.resolve('typescript');
+		let globalModulesPath = require('global-modules');
+		let typescriptRoot: string = path.join(globalModulesPath, 'typescript');
+		let typescriptResolved: string = require.resolve(typescriptRoot);
 		let tscRoot: string = path.dirname(typescriptResolved);
+		let typescript: any = require(typescriptResolved);
 		let tscPath: string = path.join(tscRoot, 'tsc.js');
 		let tscCode: string = fs.readFileSync(tscPath, 'utf8');
 		tscCode = tscCode.replace(/ts.executeCommandLine\(ts\.sys\.args\)\;/, '// ts.executeCommandLine(ts.sys.args);');

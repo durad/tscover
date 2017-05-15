@@ -4,7 +4,7 @@ let projectHash = '__projectHash__';
 let re = [];
 re.push(`<div class="viewer${projectHash}">`);
 
-g.__tscover__ = g.__tscover__ || { hash: '__projectHash__', data: {} };
+g.__tscover__ = g.__tscover__ || { hash: '__projectHash__', data: {}, autoSave: true, onExitCalled: false };
 let tscover = g.__tscover__;
 tscover.data['__filename__'] = tscover.data['__filename__'] || {
 	s: __statements__,
@@ -15,26 +15,32 @@ tscover.data['__filename__'] = tscover.data['__filename__'] || {
 
 let fs = (typeof r === 'function') ? r('fs') : null;
 let path = (typeof r === 'function') ? r('path') : null;
-
-
 let process = g.process || null;
-let autosave = process && ((process.argv && process.argv.indexOf('--autosavecover') >= 0) || process.env.AUTOSAVECOVER);
-if (autosave && !tscover.scheduleLcovSave) {
-	tscover.scheduleLcovSave = true;
-	let argIndex = process.argv.indexOf('--autosavecover');
-	if (argIndex >= 0) process.argv.splice(argIndex, 1);
 
-	for (let e of ['beforeExit', 'exit', 'SIGINT', 'SIGTERM']) {
-		process.on(e, () => {
-			if (!tscover.lcovOnExitSaved) {
-				tscover.lcovOnExitSaved = true;
-				tscover.saveCoverage();
-				tscover.saveLcov();
-				tscover.saveReport();
-			}
-		});
+function onExit() {
+	if (tscover.autoSave) {
+		tscover.saveCoverage();
+		tscover.saveLcov();
+		tscover.saveReport();
 	}
 }
+
+function scheduleOnExit() {
+	if (process && !tscover.onExitScheduled) {
+		tscover.onExitScheduled = true;
+
+		for (let e of ['beforeExit', 'exit', 'SIGINT', 'SIGTERM']) {
+			process.on(e, () => {
+				if (!tscover.onExitCalled) {
+					tscover.onExitCalled = true;
+					onExit();
+				}
+			});
+		}
+	}
+}
+
+scheduleOnExit();
 
 if (!tscover.generateCoverage) tscover.generateCoverage = function() {
 	let result = {

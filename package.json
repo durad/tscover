@@ -17,7 +17,8 @@
     "test": "mocha -u tdd",
     "prebuild": "rm -rf ./build",
     "build": "./build.sh",
-    "dev_build": "./build.sh --debug --watch"
+    "dev_build": "./build.sh --debug --watch",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",

@@ -1,4 +1,6 @@
 
+![screenshot](img/ss1.png "TSCover HTML report")
+
 # TSCover - code coverage for TypeScript
 
 TSCover is a Typescript compiler that produces instrumented javascript used to collect code coverage information. Code coverage is saved in the form of LCOV files, JSON files or as an HTML report.

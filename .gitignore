@@ -1,5 +1,11 @@
+**/.DS_Store
+node_modules/
+build/
 **/lcov.info*
 **/npm-debug.log
 *.js
-!build/*.js
 !bin/*.js
+!header/*.js
+**/coverage
+**/*.cover
+

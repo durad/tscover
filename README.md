@@ -1,5 +1,5 @@
 
-# TSCover - code coverage for TypeScript
+# TSCover - code coverage for TypeScript[![Build Status](https://travis-ci.org/durad/tscover.svg?branch=master)](https://travis-ci.org/durad/tscover)
 
 TSCover is a Typescript compiler that produces instrumented javascript used to collect code coverage information. Code coverage is saved in the form of LCOV files, JSON files or as an HTML report.
 

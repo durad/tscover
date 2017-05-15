@@ -1,6 +1,9 @@
 {
 	"files.exclude": {
-		"src/**/*.js": true
-		// "**/built": true
+		"src/**/*.js": true,
+		"node_modules": true
+	},
+	"less.compile": {
+		"out": false
 	}
 }

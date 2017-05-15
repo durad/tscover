@@ -14,7 +14,10 @@
   },
   "types": "build/tscover.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -u tdd",
+    "prebuild": "rm -rf ./build",
+    "build": "./build.sh",
+    "dev_build": "./build.sh --debug --watch"
   },
   "repository": {
     "type": "git",
@@ -31,5 +34,14 @@
   "bugs": {
     "url": "https://github.com/durad/tscover/issues"
   },
-  "homepage": "https://github.com/durad/tscover#readme"
+  "homepage": "https://github.com/durad/tscover#readme",
+  "devDependencies": {
+    "less": "^2.7.2",
+    "less-plugin-clean-css": "^1.5.1",
+    "typescript": "^2.3.2",
+    "uglify-js": "^3.0.4"
+  },
+  "dependencies": {
+    "global-modules": "^0.2.3"
+  }
 }

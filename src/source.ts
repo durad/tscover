@@ -2,17 +2,19 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as typescript from 'typescript';
-
 import { ProjectInstrumenter } from './project';
+import { Util } from './util';
 
 export class SourceInstrumenter {
+	project: ProjectInstrumenter;
 	sk: any;
 	hash: string;
-	fileName: string;
+	filePath: string;
 	source: typescript.SourceFile;
 	instrumentedSource: string;
 	statements: any[];
 	branches: any[];
+	instrument: boolean;
 
 	/**
 	 * Constructs SourceInstrumenter instance
@@ -21,11 +23,28 @@ export class SourceInstrumenter {
 	 * @param fileName File name of the current source
 	 * @param source SourceFile node that we will instrument
 	 */
-	constructor(project: ProjectInstrumenter, fileName: string, source: typescript.SourceFile) {
+	constructor(project: ProjectInstrumenter, filePath: string, source: typescript.SourceFile) {
+		this.project = project;
 		this.sk = project.sk;
-		this.hash = project.hash;
-		this.fileName = path.resolve(fileName);
+		this.hash = Util.calculateHash([source]);
+		this.filePath = path.resolve(filePath);
 		this.source = source;
+	}
+
+	/**
+	 * Searches for a first occurance of term and replaces it with a given string
+	 * @param original String to search term in
+	 * @param term Term String that is being searched
+	 * @param replacement Replacement term
+	 */
+	replace(original: string, term: string, replacement: string) {
+		let index = original.indexOf(term);
+		
+		if (index < 0) {
+			return original;
+		} else {
+			return original.substr(0, index) + replacement + original.substr(index + term.length);
+		}
 	}
 
 	/**
@@ -35,17 +54,34 @@ export class SourceInstrumenter {
 		this.statements = [];
 		this.branches = [];
 
-		this.instrumentedSource = this.visitNode(this.source, { kind: null }, { kind: null }, 0, 0, false);
+		this.instrumentedSource = this.visitNode(this.source, { kind: null }, { kind: null }, [this.source], 0, 0, false);
+
+		// covert windows paths to *nix style
+		let filePathNix = this.filePath.replace(/\\/g, '/');
 
 		// prepend header to instrumented source
-		let header = fs.readFileSync(path.join(__dirname, 'header.ts'), 'utf8')
-			.split('// ---split---')[1]
-			.replace(/__hash__/ig, this.hash)
-			.replace(/__filename__/ig, this.fileName)
-			.replace(/__statements__/ig, JSON.stringify(this.statements))
-			.replace(/__branches__/ig, JSON.stringify(this.branches));
+		let header = fs.readFileSync(path.join(__dirname, 'header.tmpl'), 'utf8')
+			.replace(/__projectHash__/g, this.project.hash)
+			.replace(/__fileHash__/g, this.hash)
+			.replace(/__filename__/g, filePathNix)
 
-		this.instrumentedSource = header + this.instrumentedSource;
+		header = this.replace(header, '__statements__', JSON.stringify(this.statements));
+		header = this.replace(header, '__branches__', JSON.stringify(this.branches));
+		header = this.replace(header, '__sourceCode__', JSON.stringify(this.source.getFullText()));
+
+		let instrumentedLines = this.instrumentedSource.split('\n');
+		if (instrumentedLines.length > 0 && instrumentedLines[0].indexOf('#!') === 0) {
+			this.instrumentedSource = [instrumentedLines[0]]
+				.concat([header])
+				.concat(instrumentedLines.slice(1))
+				.join('\n');
+		} else {
+			this.instrumentedSource = header + this.instrumentedSource;
+		}
+
+		if (this.project.options.instrument) {
+			fs.writeFileSync(this.filePath + '.cover', this.instrumentedSource);
+		}
 	}
 
 	/**
@@ -87,19 +123,28 @@ export class SourceInstrumenter {
 	protected visitNode(node: typescript.Node,
 		parent: typescript.Node | { kind: any },
 		grandParent: typescript.Node | { kind: any },
+		siblings: typescript.Node[],
 		depth: number,
 		index: number,
 		prefixed: boolean): string
 	{
-		if (!node) return '';
+		if (!node || node.kind === this.sk.FirstJSDocTagNode) {
+			return '';
+		}
 
 		let children = node.getChildren();
 		let nodeText = node.getFullText();
+
+		if (children.length === 0 ||
+			node.kind === this.sk.PropertySignature ||
+			node.kind === this.sk.FirstJSDocTagNode
+		) {
+			return nodeText;
+		}
+
 		let trivia = node.getFullText().substring(0, node.getLeadingTriviaWidth());
 		let nodePrefix = '';
 		let childVisit = '';
-
-		if (children.length === 0) return nodeText;
 
 		// if super() is a first child do not prefix it
 		let isFirstSuper = false;
@@ -115,6 +160,14 @@ export class SourceInstrumenter {
 			}
 		}
 
+		if (node.kind === this.sk.FunctionDeclaration &&
+			index !== 0 &&
+			siblings[index - 1].kind === this.sk.FunctionDeclaration &&
+			siblings[index - 1].getChildren()[siblings[index - 1].getChildCount() - 1].kind !== this.sk.Block
+		) {
+			prefixed = true;
+		}
+
 		if (!prefixed &&
 			parent.kind === this.sk.SyntaxList &&
 			(grandParent.kind === this.sk.SourceFile || grandParent.kind === this.sk.Block) &&
@@ -126,16 +179,16 @@ export class SourceInstrumenter {
 
 		if (node.kind === this.sk.IfStatement) {
 			let ifStatement = node as typescript.IfStatement;
-			let expVisit = this.visitNode(ifStatement.expression, ifStatement, parent, depth + 1, 0, false);
-			let thenVisit = this.visitNode(ifStatement.thenStatement, ifStatement, parent, depth + 1, 0, false);
-			let elseVisit = this.visitNode(ifStatement.elseStatement, ifStatement, parent, depth + 1, 0, false);
+			let expVisit = this.visitNode(ifStatement.expression, ifStatement, parent, [ifStatement.expression], depth + 1, 0, false);
+			let thenVisit = this.visitNode(ifStatement.thenStatement, ifStatement, parent, [ifStatement.thenStatement], depth + 1, 0, false);
+			let elseVisit = this.visitNode(ifStatement.elseStatement, ifStatement, parent, [ifStatement.elseStatement], depth + 1, 0, false);
 
 			let branch = this.reportBranch(ifStatement);
 			childVisit = trivia + `if (${expVisit}) { ${branch}[0]++; ${thenVisit} } else { ${branch}[1]++; ${elseVisit} } `;
 		} else {
 			let p = [];
 			for (let i = 0; i < children.length; i++) {
-				p.push(this.visitNode(children[i], node, parent, depth + 1, i, false));
+				p.push(this.visitNode(children[i], node, parent, children, depth + 1, i, prefixed && i === 0));
 			}
 
 			childVisit = p.join('');

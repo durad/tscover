@@ -1,0 +1,211 @@
+
+@fileListWidth: 260px;
+
+@fileListBackground: #f3f6f6;
+@fileListSelected: #d0d7d9;
+@fileListHover: lighten(@fileListSelected, 5%);
+@fileListCoveredColor: #195;
+@fileListNonCoveredColor: #c32;
+
+@sourceBackground: #fafafa;
+@lineNumberColor: #333;
+@lineNumberBorder: 1px solid #cccbc7;
+
+@lineNumCoveredBack: #9ac583;
+@coveredBackground: lighten(@lineNumCoveredBack, 22%);
+@coveredCountColor: #9fc28b;
+
+@lineNumNonCoveredBack: #ec7f74;
+@noncoveredBackground: lighten(@lineNumNonCoveredBack, 20%);
+@noncoveredCountColor: #802;
+
+@warrningTextColor: #802;
+@warrningBack: #f8d2ce;
+
+@key1Color: #35a;
+@key2Color: #538;
+@key3Color: #3a8;
+@numColor: #466;
+@strColor: #720;
+@commentColor: #aaa;
+
+.viewer__projectHash__ {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+}
+
+.filelist__projectHash__ {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	width: @fileListWidth;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	background-color: @fileListBackground;
+	border-right: 1px solid #ccc;
+	box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+	overflow: auto;
+	z-index: 10;
+}
+
+.filecontainer__projectHash__ {
+	position: relative;
+	cursor: pointer;
+
+	&:hover{
+		background-color: @fileListHover;
+	}
+
+	&.active__projectHash__ {
+		cursor: default;
+		background-color: @fileListSelected;
+	}
+}
+
+.filepath__projectHash__ {
+	margin-right: 50px;
+	padding: 4px 0px 4px 6px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	direction: rtl;
+	text-align: left;
+	unicode-bidi: plaintext;
+
+}
+
+.filestat__projectHash__ {
+	position: absolute;
+	right: 3px;
+	top: 0px;
+	box-sizing: border-box;
+	padding: 4px 0px;
+
+	&.green__projectHash__ {
+		color: @fileListCoveredColor;
+	}
+
+	&.red__projectHash__ {
+		color: @fileListNonCoveredColor;
+	}
+}
+
+.filecontent__projectHash__ {
+	display: none;
+	position: absolute;
+	left: @fileListWidth;
+	top: 0px;
+	bottom: 0px;
+	right: 0px;
+	font-family: 'Consolas', 'Courier New', monospace;
+	font-size: 14px;
+	overflow: auto;
+}
+
+.filecontent__projectHash__.active__projectHash__ {
+	display: block;
+	background-color: @sourceBackground;
+}
+
+.linenumbers__projectHash__ {
+	position: absolute;
+	left: 0px;
+	width: 40px;
+	margin: 0px;
+	border-right: @lineNumberBorder;
+	box-sizing: border-box;
+	margin: 0px;
+}
+
+.linenumber__projectHash__ {
+	text-align: right;
+	padding-right: 3px;
+	color: @lineNumberColor;
+
+	&.covered__projectHash__ {
+		background-color: @lineNumCoveredBack;
+	}
+
+	&.noncovered__projectHash__ {
+		background-color: @lineNumNonCoveredBack;
+	}
+}
+
+.source__projectHash__ {
+	position: absolute;
+	left: 40px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
+	margin: 0px;
+	tab-size: 4;
+}
+
+.line__projectHash__ {
+	display: inline-block;
+	position: relative;
+	width: 100%;
+	padding-left: 4px;
+	box-sizing: border-box;
+}
+
+.warrning__projectHash__ {
+	display: inline-block;
+	color: @warrningTextColor;
+	padding: 0px 3px;
+	margin: 0px 2px;
+	font-size: 11px;
+	background-color: @warrningBack;
+	border-radius: 2px;
+	border: 1px solid @warrningTextColor;
+	height: 14px;
+	box-sizing: border-box;
+	top: 0px;
+}
+
+.covercount__projectHash__ {
+	position: absolute;
+	right: 5px;
+	color: @coveredCountColor;
+}
+
+.covered__projectHash__ {
+	background-color: @coveredBackground;
+}
+
+.noncovered__projectHash__ {
+	background-color: @noncoveredBackground;
+
+	.count__projectHash__ {
+		color: @noncoveredCountColor;
+	}
+}
+
+
+.key1__projectHash__ {
+	color: @key1Color;
+}
+
+.key2__projectHash__ {
+	color: @key2Color;
+}
+
+.key3__projectHash__ {
+	color: @key3Color;
+}
+
+.num__projectHash__ {
+	color: @numColor;
+}
+
+.str__projectHash__ {
+	color: @strColor;
+}
+
+.comment__projectHash__ {
+	color: @commentColor;
+}

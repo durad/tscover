@@ -51,7 +51,7 @@ export class ProjectInstrumenter {
 			program.emit(undefined, (fileName, data, writeByteOrderMark, onError) => {});
 
 			let sources = program.getSourceFiles();
-			this.hash = Util.calculateHash(program.getSourceFiles());
+			this.hash = Util.calculateHash(program.getSourceFiles().filter(x => true));
 
 			// getSourceFile gets syntax tree of the source file. We are hijacking this to insert instrumentaion logic
 			let getSourceFileOriginal = compilerHost.getSourceFile;

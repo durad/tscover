@@ -17,8 +17,7 @@
     "test": "mocha -u tdd",
     "prebuild": "rm -rf ./build",
     "build": "./build.sh",
-    "dev_build": "./build.sh --debug --watch",
-    "prepublish": "npm run build"
+    "dev_build": "./build.sh --debug --watch"
   },
   "repository": {
     "type": "git",
@@ -37,6 +36,8 @@
   },
   "homepage": "https://github.com/durad/tscover#readme",
   "devDependencies": {
+    "@types/mocha": "^2.2.44",
+    "@types/node": "^8.0.51",
     "less": "^2.7.2",
     "less-plugin-clean-css": "^1.5.1",
     "typescript": "^2.3.2",

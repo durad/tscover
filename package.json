@@ -14,7 +14,7 @@
   },
   "types": "build/tscover.d.ts",
   "scripts": {
-    "test": "mocha -u tdd",
+    "test": "mocha -u tdd --require ts-node/register test/test.ts",
     "prebuild": "rm -rf ./build",
     "build": "./build.sh",
     "dev_build": "./build.sh --debug --watch"
@@ -40,6 +40,7 @@
     "@types/node": "^8.0.51",
     "less": "^2.7.2",
     "less-plugin-clean-css": "^1.5.1",
+    "ts-node": "^3.3.0",
     "typescript": "^2.3.2",
     "uglify-js": "^3.0.4"
   },

@@ -57,6 +57,7 @@
       true,
       150
     ],
+    "linebreak-style": [true, "LF"],
     "no-eval": true,
     "no-internal-module": true,
     "no-unsafe-finally": true,

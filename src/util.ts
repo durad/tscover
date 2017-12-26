@@ -7,7 +7,7 @@ export class Util {
 	 * Calculates a hash for a given array of source files
 	 * @param sources Array of source file nodes to calculate hash for
 	 */
-	static calculateHash(sources: typescript.SourceFile[]): string {
+	static calculateHash(sources: ReadonlyArray<typescript.SourceFile>): string {
 		let hash = crypto.createHash('md5');
 
 		for (let source of sources) {

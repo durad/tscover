@@ -39,7 +39,7 @@ export class SourceInstrumenter {
 	 */
 	replace(original: string, term: string, replacement: string) {
 		let index = original.indexOf(term);
-		
+
 		if (index < 0) {
 			return original;
 		} else {
@@ -63,7 +63,7 @@ export class SourceInstrumenter {
 		let header = fs.readFileSync(path.join(__dirname, 'header.tmpl'), 'utf8')
 			.replace(/__projectHash__/g, this.project.hash)
 			.replace(/__fileHash__/g, this.hash)
-			.replace(/__filename__/g, filePathNix)
+			.replace(/__filename__/g, filePathNix);
 
 		header = this.replace(header, '__statements__', JSON.stringify(this.statements));
 		header = this.replace(header, '__branches__', JSON.stringify(this.branches));
@@ -120,14 +120,15 @@ export class SourceInstrumenter {
 	 * @param index Node's index in parent's list of children
 	 * @param prefixed True if one of the parents has already been prefixed
 	 */
-	protected visitNode(node: typescript.Node,
+	protected visitNode(
+		node: typescript.Node,
 		parent: typescript.Node | { kind: any },
 		grandParent: typescript.Node | { kind: any },
 		siblings: typescript.Node[],
 		depth: number,
 		index: number,
-		prefixed: boolean): string
-	{
+		prefixed: boolean
+	): string {
 		if (!node || node.kind === this.sk.FirstJSDocTagNode) {
 			return '';
 		}
@@ -174,7 +175,7 @@ export class SourceInstrumenter {
 			!isFirstSuper
 		) {
 			nodePrefix = this.reportStatement(node);
-			nodePrefix += ((node.kind == this.sk.ExpressionStatement || node.kind == this.sk.CallExpression) ? ', ' : '; ');
+			nodePrefix += ((node.kind === this.sk.ExpressionStatement || node.kind === this.sk.CallExpression) ? ', ' : '; ');
 		}
 
 		if (node.kind === this.sk.IfStatement) {

@@ -14,6 +14,6 @@ export class Util {
 			hash.update(source.getFullText());
 		}
 
-		return '__' + hash.digest("hex").substring(0, 8) + '__';
+		return '__' + hash.digest('hex').substring(0, 8) + '__';
 	}
 }

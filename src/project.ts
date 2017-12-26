@@ -57,7 +57,7 @@ export class ProjectInstrumenter {
 			let getSourceFileOriginal = compilerHost.getSourceFile;
 			compilerHost.getSourceFile = (fileName, languageVersion, onError) => {
 				let result: typescript.SourceFile = getSourceFileOriginal.apply(compilerHost, [fileName, languageVersion, onError]);
-				let source = sources.filter(s => s.fileName == fileName)[0];
+				let source = sources.filter(s => s.fileName === fileName)[0];
 
 				if (fileName.match(/\.ts$/) && !fileName.match(/\.d\.ts$/) && source) {
 					let instrumenter = new SourceInstrumenter(this, fileName, source);

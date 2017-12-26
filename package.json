@@ -17,7 +17,8 @@
     "test": "mocha -u tdd --require ts-node/register ./test/test.ts",
     "build-src": "tsc",
     "build-header": "node header/buildheader.js --outDir ./build",
-    "build": "npm run build-src && npm run build-header",
+    "build": "npm run tslint-src && npm run build-src && npm run build-header",
+    "tslint-src": "tslint src/**/*.ts --project tslint.json",
     "watch:build-src": "tsc -w --pretty",
     "watch:build-header": "nodemon --watch ./header --ext \"ts,js,less\" --exec \"node header/buildheader.js --outDir ./build\"",
     "watch:build": "concurrently --kill-others --prefix \"[{name}]\" --names \"SRC_,HEAD\" -c \"bgGreen.black,bgBlue.white\" \"npm run watch:build-src\" \"npm run watch:build-header\" "
@@ -45,6 +46,7 @@
     "less": "^2.7.2",
     "less-plugin-clean-css": "^1.5.1",
     "ts-node": "^3.3.0",
+    "tslint": "5.8.0",
     "typescript": "^2.3.2",
     "uglify-js": "^3.0.4"
   },
